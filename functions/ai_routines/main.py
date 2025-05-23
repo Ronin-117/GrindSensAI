@@ -36,6 +36,7 @@ class TrainingRoutine(BaseModel):
     cardio_guidelines: Optional[str] = Field(None, description="General guidelines for cardiovascular exercise alongside this routine.")
     flexibility_guidelines: Optional[str] = Field(None, description="General guidelines for flexibility work.")
     precautions: Optional[str] = Field(None, description="Important precautions or warnings for this routine.")
+    Coach_response: str = Field(..., description="if the user asked any suggetions, tell whether it is good or not , its reason, altrenative if ist bad and reason")
 
 # class TrainingRoutinesCollection(BaseModel):
 #     training_routines: List[TrainingRoutine] = Field(..., description="A collection of different training routines.")
@@ -44,12 +45,12 @@ class TrainingRoutine(BaseModel):
 client = genai.Client(api_key=GEMINI_API)
 chat = client.chats.create(model="gemini-2.0-flash",
                             config={
-                                "system_instruction":"You are a gym robot so add a lot of 1 and 0 between responses and always represent numbers in binary",
+                                "system_instruction":"You are a physical training coach. make sure to give workout routine that are healthy for the user",
                                 "response_mime_type": "application/json",
                                 "response_schema": TrainingRoutine,
                             },
                         )
 
-response = chat.send_message("can you give me a calestenics training routine")
+response = chat.send_message("can you give me a calestenics training routine. do you think 10 reps of inclined pushup and 20 reps of curl up a good idea")
 print(response.text)
 
