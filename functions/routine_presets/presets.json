@@ -1,0 +1,315 @@
+{
+  "training_routines": [
+    {
+      "routine_id": "BFB001",
+      "routine_name": "Beginner Full Body Strength",
+      "goal": "Build foundational strength and muscle, learn basic movements.",
+      "experience_level": "Beginner",
+      "training_split": "Full Body",
+      "days_per_week": "2-3 (with at least one rest day in between)",
+      "description": "A simple full-body routine focusing on compound exercises. Ideal for individuals new to strength training.",
+      "weekly_schedule": [
+        {
+          "day_of_week_or_number": "Workout Day (e.g., Monday, Wednesday, Friday)",
+          "session_focus": "Full Body Strength",
+          "exercises": [
+            {
+              "exercise_name": "Bodyweight Squats (or Goblet Squats)",
+              "target_muscles": ["Quadriceps", "Glutes", "Hamstrings", "Core"],
+              "sets": "2-3",
+              "reps_or_duration": "8-12 reps",
+              "rest_period": "60-90 seconds",
+              "notes": "Focus on form: chest up, back straight, descend until thighs are parallel to the floor or as low as comfortable."
+            },
+            {
+              "exercise_name": "Push-ups (can be done on knees if needed)",
+              "target_muscles": ["Chest", "Shoulders", "Triceps", "Core"],
+              "sets": "2-3",
+              "reps_or_duration": "As many reps as possible (AMRAP) with good form, aiming for 5-10 reps",
+              "rest_period": "60-90 seconds",
+              "notes": "Keep body in a straight line from head to heels (or knees)."
+            },
+            {
+              "exercise_name": "Dumbbell Rows (or Resistance Band Rows)",
+              "target_muscles": ["Back (Lats, Rhomboids)", "Biceps"],
+              "sets": "2-3",
+              "reps_or_duration": "8-12 reps per side",
+              "rest_period": "60-90 seconds",
+              "notes": "Keep back straight, pull dumbbell towards hip."
+            },
+            {
+              "exercise_name": "Plank",
+              "target_muscles": ["Core (Abs, Lower Back)"],
+              "sets": "2-3",
+              "reps_or_duration": "Hold for 20-30 seconds",
+              "rest_period": "60 seconds",
+              "notes": "Maintain a straight line from head to heels, engage core."
+            },
+            {
+              "exercise_name": "Glute Bridges",
+              "target_muscles": ["Glutes", "Hamstrings", "Lower Back"],
+              "sets": "2-3",
+              "reps_or_duration": "12-15 reps",
+              "rest_period": "60 seconds",
+              "notes": "Squeeze glutes at the top of the movement."
+            }
+          ]
+        }
+      ],
+      "cardio_guidelines": "Optional: 20-30 minutes of light to moderate cardio (brisk walking, cycling) on non-strength training days or after strength workouts.",
+      "flexibility_guidelines": "Perform 5-10 minutes of dynamic stretching before workouts and 5-10 minutes of static stretching after workouts. Focus on major muscle groups worked.",
+      "precautions": "Start with light weights or bodyweight. Focus on learning proper form before increasing weight or intensity. Ensure adequate rest between sessions."
+    },
+    {
+      "routine_id": "IUL002",
+      "routine_name": "Intermediate Upper/Lower Split",
+      "goal": "Increase strength and muscle hypertrophy.",
+      "experience_level": "Intermediate",
+      "training_split": "Upper/Lower",
+      "days_per_week": "4 (e.g., Mon: Upper, Tue: Lower, Thu: Upper, Fri: Lower)",
+      "description": "Splits training into upper body and lower body days, allowing for more volume per muscle group and adequate recovery.",
+      "weekly_schedule": [
+        {
+          "day_of_week_or_number": "Day 1 & 3: Upper Body",
+          "session_focus": "Upper Body Strength & Hypertrophy",
+          "exercises": [
+            {
+              "exercise_name": "Barbell Bench Press (or Dumbbell Press)",
+              "target_muscles": ["Chest", "Shoulders", "Triceps"],
+              "sets": "3-4",
+              "reps_or_duration": "6-10 reps",
+              "rest_period": "90-120 seconds",
+              "notes": "Vary grip width or incline/decline for variety if desired on different days."
+            },
+            {
+              "exercise_name": "Bent-Over Rows (Barbell or Dumbbell)",
+              "target_muscles": ["Back (Lats, Rhomboids, Traps)", "Biceps"],
+              "sets": "3-4",
+              "reps_or_duration": "6-10 reps",
+              "rest_period": "90-120 seconds",
+              "notes": "Maintain a neutral spine."
+            },
+            {
+              "exercise_name": "Overhead Press (Barbell or Dumbbell)",
+              "target_muscles": ["Shoulders", "Triceps"],
+              "sets": "3",
+              "reps_or_duration": "8-12 reps",
+              "rest_period": "60-90 seconds"
+            },
+            {
+              "exercise_name": "Pull-ups (or Lat Pulldowns)",
+              "target_muscles": ["Back (Lats)", "Biceps"],
+              "sets": "3",
+              "reps_or_duration": "AMRAP or 8-12 reps",
+              "rest_period": "60-90 seconds"
+            },
+            {
+              "exercise_name": "Dumbbell Bicep Curls",
+              "target_muscles": ["Biceps"],
+              "sets": "2-3",
+              "reps_or_duration": "10-15 reps",
+              "rest_period": "60 seconds"
+            },
+            {
+              "exercise_name": "Triceps Pushdowns (or Overhead Dumbbell Extension)",
+              "target_muscles": ["Triceps"],
+              "sets": "2-3",
+              "reps_or_duration": "10-15 reps",
+              "rest_period": "60 seconds"
+            }
+          ]
+        },
+        {
+          "day_of_week_or_number": "Day 2 & 4: Lower Body & Core",
+          "session_focus": "Lower Body Strength & Hypertrophy, Core",
+          "exercises": [
+            {
+              "exercise_name": "Barbell Back Squats",
+              "target_muscles": ["Quadriceps", "Glutes", "Hamstrings", "Core"],
+              "sets": "3-4",
+              "reps_or_duration": "6-10 reps",
+              "rest_period": "90-120 seconds"
+            },
+            {
+              "exercise_name": "Romanian Deadlifts (RDLs) or Conventional Deadlifts (alternate)",
+              "target_muscles": ["Hamstrings", "Glutes", "Lower Back"],
+              "sets": "3",
+              "reps_or_duration": "8-12 reps (RDLs) or 3-5 reps (Deadlifts)",
+              "rest_period": "90-120 seconds",
+              "notes": "Focus heavily on form for deadlifts."
+            },
+            {
+              "exercise_name": "Lunges (Dumbbell or Bodyweight)",
+              "target_muscles": ["Quadriceps", "Glutes"],
+              "sets": "3",
+              "reps_or_duration": "10-12 reps per leg",
+              "rest_period": "60-90 seconds"
+            },
+            {
+              "exercise_name": "Leg Press",
+              "target_muscles": ["Quadriceps", "Glutes", "Hamstrings"],
+              "sets": "3",
+              "reps_or_duration": "10-15 reps",
+              "rest_period": "60-90 seconds"
+            },
+            {
+              "exercise_name": "Calf Raises (Standing or Seated)",
+              "target_muscles": ["Calves"],
+              "sets": "3-4",
+              "reps_or_duration": "15-20 reps",
+              "rest_period": "45-60 seconds"
+            },
+            {
+              "exercise_name": "Hanging Leg Raises (or Lying Leg Raises)",
+              "target_muscles": ["Core (Abs)"],
+              "sets": "3",
+              "reps_or_duration": "10-15 reps or AMRAP",
+              "rest_period": "60 seconds"
+            }
+          ]
+        }
+      ],
+      "cardio_guidelines": "2-3 sessions of 20-30 minutes moderate-intensity cardio on rest days or light cardio after workouts. Can include one HIIT session per week if well-recovered.",
+      "flexibility_guidelines": "Regular dynamic stretching before workouts and static stretching after. Consider dedicated mobility sessions or yoga.",
+      "precautions": "Ensure good form, especially on compound lifts. Gradually increase weight/volume. Listen to your body and take rest days seriously to avoid overtraining."
+    },
+    {
+      "routine_id": "IPPL003",
+      "routine_name": "Intermediate Push/Pull/Legs (PPL)",
+      "goal": "Balanced muscle development and strength increase.",
+      "experience_level": "Intermediate",
+      "training_split": "Push/Pull/Legs",
+      "days_per_week": "3-6 (e.g., P-P-L-Rest-P-P-L or P-P-L-Rest and repeat)",
+      "description": "Organizes workouts by movement pattern: pushing, pulling, and leg exercises. Allows for good frequency if run twice a week.",
+      "weekly_schedule": [
+        {
+          "day_of_week_or_number": "Push Day",
+          "session_focus": "Chest, Shoulders, Triceps",
+          "exercises": [
+            {"exercise_name": "Barbell Bench Press", "target_muscles": ["Chest", "Shoulders", "Triceps"], "sets": "3-4", "reps_or_duration": "6-10", "rest_period": "90-120s"},
+            {"exercise_name": "Overhead Press", "target_muscles": ["Shoulders", "Triceps"], "sets": "3-4", "reps_or_duration": "8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Incline Dumbbell Press", "target_muscles": ["Upper Chest", "Shoulders", "Triceps"], "sets": "3", "reps_or_duration": "8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Lateral Raises", "target_muscles": ["Shoulders (Lateral Deltoids)"], "sets": "3", "reps_or_duration": "12-15", "rest_period": "60s"},
+            {"exercise_name": "Triceps Dips (or Close Grip Bench Press)", "target_muscles": ["Triceps", "Chest"], "sets": "3", "reps_or_duration": "AMRAP or 8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Triceps Pushdowns", "target_muscles": ["Triceps"], "sets": "2-3", "reps_or_duration": "10-15", "rest_period": "60s"}
+          ]
+        },
+        {
+          "day_of_week_or_number": "Pull Day",
+          "session_focus": "Back, Biceps",
+          "exercises": [
+            {"exercise_name": "Pull-ups (or Lat Pulldowns)", "target_muscles": ["Back (Lats)", "Biceps"], "sets": "3-4", "reps_or_duration": "AMRAP or 6-10", "rest_period": "90-120s"},
+            {"exercise_name": "Barbell Rows", "target_muscles": ["Back (Lats, Rhomboids, Traps)", "Biceps"], "sets": "3-4", "reps_or_duration": "6-10", "rest_period": "90-120s"},
+            {"exercise_name": "Seated Cable Rows", "target_muscles": ["Back (Mid-Back)", "Biceps"], "sets": "3", "reps_or_duration": "10-12", "rest_period": "60-90s"},
+            {"exercise_name": "Face Pulls", "target_muscles": ["Rear Deltoids", "Upper Back"], "sets": "3", "reps_or_duration": "15-20", "rest_period": "60s"},
+            {"exercise_name": "Barbell Bicep Curls", "target_muscles": ["Biceps"], "sets": "3", "reps_or_duration": "8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Hammer Curls", "target_muscles": ["Biceps", "Forearms"], "sets": "2-3", "reps_or_duration": "10-15", "rest_period": "60s"}
+          ]
+        },
+        {
+          "day_of_week_or_number": "Leg Day",
+          "session_focus": "Quadriceps, Hamstrings, Glutes, Calves, Core",
+          "exercises": [
+            {"exercise_name": "Squats", "target_muscles": ["Quadriceps", "Glutes", "Hamstrings"], "sets": "3-4", "reps_or_duration": "6-10", "rest_period": "90-120s"},
+            {"exercise_name": "Romanian Deadlifts", "target_muscles": ["Hamstrings", "Glutes"], "sets": "3-4", "reps_or_duration": "8-12", "rest_period": "90-120s"},
+            {"exercise_name": "Leg Press", "target_muscles": ["Quadriceps", "Glutes"], "sets": "3", "reps_or_duration": "10-15", "rest_period": "60-90s"},
+            {"exercise_name": "Lying Leg Curls", "target_muscles": ["Hamstrings"], "sets": "3", "reps_or_duration": "12-15", "rest_period": "60s"},
+            {"exercise_name": "Calf Raises", "target_muscles": ["Calves"], "sets": "4", "reps_or_duration": "15-20", "rest_period": "45-60s"},
+            {"exercise_name": "Abdominal Crunches/Planks", "target_muscles": ["Core"], "sets": "3", "reps_or_duration": "15-20 reps or 30-60s hold", "rest_period": "60s"}
+          ]
+        }
+      ],
+      "cardio_guidelines": "Flexible. Can be done on rest days, or 15-20 minutes post-workout. Adjust based on recovery and goals.",
+      "flexibility_guidelines": "Essential. Dynamic warm-ups pre-workout, static stretching post-workout. Focus on hips, hamstrings, shoulders, and chest.",
+      "precautions": "Can be demanding if run 6 days a week. Prioritize recovery, sleep, and nutrition. Ensure proper form to handle volume."
+    },
+    {
+      "routine_id": "CFE004",
+      "routine_name": "Cardio Endurance Builder",
+      "goal": "Improve cardiovascular health and endurance.",
+      "experience_level": "Beginner to Intermediate",
+      "training_split": "Cardio Focused",
+      "days_per_week": "3-5",
+      "description": "Focuses on developing aerobic capacity through various cardiovascular exercises.",
+      "weekly_schedule": [
+        {
+          "day_of_week_or_number": "Day 1, 3, 5 (Example)",
+          "session_focus": "Moderate Intensity Steady State (MISS) Cardio",
+          "exercises": [
+            {
+              "exercise_name": "Running, Cycling, Swimming, or Brisk Walking",
+              "target_muscles": ["Cardiovascular System", "Legs (activity dependent)"],
+              "sets": "1",
+              "reps_or_duration": "30-60 minutes",
+              "rest_period": "N/A",
+              "notes": "Maintain a heart rate of 60-75% of maximum heart rate. Should be able to hold a conversation."
+            }
+          ]
+        },
+        {
+          "day_of_week_or_number": "Day 2 (Optional - for Intermediates)",
+          "session_focus": "High-Intensity Interval Training (HIIT)",
+          "exercises": [
+            {
+              "exercise_name": "Sprints (Running, Cycling, Rower)",
+              "target_muscles": ["Cardiovascular System", "Legs (activity dependent)"],
+              "sets": "1",
+              "reps_or_duration": "20-30 seconds high intensity, 60-90 seconds low intensity/rest. Repeat 5-8 times.",
+              "rest_period": "Between intervals",
+              "notes": "Warm-up thoroughly before HIIT. Cool down afterwards."
+            }
+          ]
+        }
+      ],
+      "cardio_guidelines": "This routine is cardio-centric. Cross-training with different cardio modalities can prevent overuse injuries.",
+      "flexibility_guidelines": "Stretch major muscle groups used (legs, hips) after each session.",
+      "precautions": "Gradually increase duration and intensity. Stay hydrated. Wear appropriate footwear. Consult a doctor before starting if you have heart conditions."
+    },
+    {
+      "routine_id": "TGF005",
+      "routine_name": "Total General Fitness",
+      "goal": "Achieve a balanced level of overall fitness including strength, cardiovascular health, and flexibility.",
+      "experience_level": "Beginner to Intermediate",
+      "training_split": "Balanced/Hybrid",
+      "days_per_week": "3-5",
+      "description": "A well-rounded routine incorporating strength, cardio, and flexibility.",
+      "weekly_schedule": [
+        {
+          "day_of_week_or_number": "Day 1 & 3: Full Body Strength",
+          "session_focus": "Full Body Strength",
+          "exercises": [
+            {"exercise_name": "Squats", "target_muscles": ["Legs", "Glutes"], "sets": "3", "reps_or_duration": "8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Bench Press (or Push-ups)", "target_muscles": ["Chest", "Shoulders", "Triceps"], "sets": "3", "reps_or_duration": "8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Rows (Dumbbell or Machine)", "target_muscles": ["Back", "Biceps"], "sets": "3", "reps_or_duration": "8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Overhead Press", "target_muscles": ["Shoulders"], "sets": "3", "reps_or_duration": "8-12", "rest_period": "60-90s"},
+            {"exercise_name": "Plank", "target_muscles": ["Core"], "sets": "3", "reps_or_duration": "30-60s hold", "rest_period": "60s"}
+          ]
+        },
+        {
+          "day_of_week_or_number": "Day 2 & 4 (or 5): Cardio & Flexibility",
+          "session_focus": "Cardiovascular Health and Range of Motion",
+          "exercises": [
+            {
+              "exercise_name": "Moderate Cardio (e.g., Jogging, Cycling, Elliptical)",
+              "target_muscles": ["Cardiovascular System"],
+              "sets": "1",
+              "reps_or_duration": "30-45 minutes",
+              "rest_period": "N/A"
+            },
+            {
+              "exercise_name": "Full Body Static Stretching or Yoga/Pilates Session",
+              "target_muscles": ["All major muscle groups"],
+              "sets": "1",
+              "reps_or_duration": "15-30 minutes",
+              "rest_period": "N/A",
+              "notes": "Focus on holding stretches for 20-30 seconds each."
+            }
+          ]
+        }
+      ],
+      "cardio_guidelines": "Integrated into the weekly schedule. Aim for at least 150 minutes of moderate-intensity cardio per week.",
+      "flexibility_guidelines": "Dedicated sessions plus dynamic warm-ups and static cool-downs around strength workouts.",
+      "precautions": "Adjust intensity and volume based on individual fitness level. Ensure at least 1-2 rest days per week for recovery."
+    }
+  ]
+}
