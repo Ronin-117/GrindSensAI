@@ -1,0 +1,11 @@
+login/signup(physical, misc info) with minimal credentials
+upon signup initialize a user profile (That can be used by ai as well)
+have some preset training routines from which user can select
+ability to create new routine or edit existing ones under ai supervision
+access todays workout plan based on existing routine
+give animated toutorial (if possible)
+CV augmented workout tracking (can be toggled buy the user)
+ability to pause and resume workout (remind user if forgotten)
+track performance everyday based of speed, regular rest, presistance
+ask for physical info every week end
+give prefomace score/grind stars every week end 
