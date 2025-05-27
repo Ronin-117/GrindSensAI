@@ -15,8 +15,9 @@ class UserProfile(models.Model): # Optional: for extra user-specific info
 
 
 class TrainingRoutine(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='training_routines')
-    routine_id = models.CharField(max_length=100, unique=True) # Consider if this should be unique per user or globally
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='training_routines' , null=True, blank=True)
+    is_preset = models.BooleanField(default=False, help_text="Is this a system-wide preset routine?")
+    routine_id = models.CharField(max_length=100) 
     routine_name = models.CharField(max_length=255)
     goal = models.TextField()
     experience_level = models.CharField(max_length=100)
@@ -26,12 +27,13 @@ class TrainingRoutine(models.Model):
     cardio_guidelines = models.TextField(null=True, blank=True)
     flexibility_guidelines = models.TextField(null=True, blank=True)
     precautions = models.TextField(null=True, blank=True)
-    coach_response = models.TextField(default="No coach feedback yet.") # Provide a default
+    coach_response = models.TextField(default="No coach feedback.") 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.routine_name} ({self.user.username})"
+        prefix = "[PRESET] " if self.is_preset else f"[{self.user.username if self.user else 'NO_USER'}] "
+        return f"{prefix}{self.routine_name}"
 
 class WeeklyScheduleItem(models.Model):
     routine = models.ForeignKey(TrainingRoutine, on_delete=models.CASCADE, related_name='weekly_schedule')

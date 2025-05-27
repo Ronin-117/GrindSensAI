@@ -1,9 +1,14 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import UserProfile, TrainingRoutine
+from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise
 from .serializers import UserSerializer,UserProfileSerializer,TrainingRoutineSerializer
 from rest_framework.exceptions import ValidationError
+from django.db.models import Q
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.decorators import action
+import time
+
 
 # Create your views here.
 
@@ -39,20 +44,84 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
 
 class TrainingRoutineListCreateView(generics.ListCreateAPIView):
     serializer_class = TrainingRoutineSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated] # User must be logged in to see/create
 
     def get_queryset(self):
-        # Only return routines belonging to the currently authenticated user
-        return TrainingRoutine.objects.filter(user=self.request.user).order_by('-created_at')
+        user = self.request.user
+        # Return presets OR routines belonging to the current user
+        return TrainingRoutine.objects.filter(
+            Q(is_preset=True) | Q(user=user)
+        ).distinct().order_by('-is_preset', '-created_at') # Presets first, then user's
 
     def perform_create(self, serializer):
-        # Automatically associate the new routine with the logged-in user
-        serializer.save(user=self.request.user)
+        # When a user creates a routine, it's NOT a preset and belongs to them.
+        serializer.save(user=self.request.user, is_preset=False)
 
 class TrainingRoutineDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TrainingRoutineSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        # Ensure users can only access/modify their own routines
-        return TrainingRoutine.objects.filter(user=self.request.user)
+        user = self.request.user
+        return TrainingRoutine.objects.filter(
+            Q(is_preset=True) | Q(user=user)
+        ).distinct()
+
+    def perform_update(self, serializer):
+        instance = serializer.instance
+        if instance.is_preset and not self.request.user.is_staff: # Only staff can edit presets
+            raise PermissionDenied("You do not have permission to edit preset routines.")
+        # For user-owned routines, ensure they are the owner (already handled by get_queryset for non-staff)
+        serializer.save() # For user routines, user will be implicitly the same
+
+    def perform_destroy(self, instance):
+        if instance.is_preset and not self.request.user.is_staff: # Only staff can delete presets
+            raise PermissionDenied("You do not have permission to delete preset routines.")
+        instance.delete()
+
+    @action(detail=True, methods=['post'], url_path='copy', permission_classes=[permissions.IsAuthenticated])
+    def copy_routine(self, request, pk=None):
+        original_routine = self.get_object() # Gets the routine by pk (could be a preset)
+
+        if not original_routine: # Should be caught by get_object if not found
+            return Response({"detail": "Routine not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Create a new routine for the current user based on the original
+        new_routine_data = {
+            "user": request.user,
+            "is_preset": False, # This is now a user's custom routine
+            "routine_id": f"{original_routine.routine_id}_copy_{int(time.time())}", # Ensure unique ID
+            "routine_name": f"{original_routine.routine_name} (Copy)",
+            "goal": original_routine.goal,
+            "experience_level": original_routine.experience_level,
+            "training_split": original_routine.training_split,
+            "days_per_week": original_routine.days_per_week,
+            "description": original_routine.description,
+            "cardio_guidelines": original_routine.cardio_guidelines,
+            "flexibility_guidelines": original_routine.flexibility_guidelines,
+            "precautions": original_routine.precautions,
+            "coach_response": "Copied from preset. Adjust as needed." # Or clear it
+        }
+
+        # Deep copy weekly schedule and exercises
+        new_routine = TrainingRoutine.objects.create(**new_routine_data)
+
+        for original_schedule_item in original_routine.weekly_schedule.all():
+            new_schedule_item = WeeklyScheduleItem.objects.create(
+                routine=new_routine,
+                day_of_week_or_number=original_schedule_item.day_of_week_or_number,
+                session_focus=original_schedule_item.session_focus
+            )
+            for original_exercise in original_schedule_item.exercises.all():
+                Exercise.objects.create(
+                    schedule_item=new_schedule_item,
+                    exercise_name=original_exercise.exercise_name,
+                    target_muscles=original_exercise.target_muscles,
+                    sets=original_exercise.sets,
+                    reps_or_duration=original_exercise.reps_or_duration,
+                    rest_period=original_exercise.rest_period,
+                    notes=original_exercise.notes
+                )
+
+        serializer = self.get_serializer(new_routine)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
