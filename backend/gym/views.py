@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import UserProfile
-from .serializers import UserSerializer,UserProfileSerializer
+from .models import UserProfile, TrainingRoutine
+from .serializers import UserSerializer,UserProfileSerializer,TrainingRoutineSerializer
 from rest_framework.exceptions import ValidationError
 
 # Create your views here.
@@ -33,3 +33,26 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
         if created:
             print(f"Profile created on first access for user {self.request.user.username}")
         return profile
+    
+
+##############################################################################################
+
+class TrainingRoutineListCreateView(generics.ListCreateAPIView):
+    serializer_class = TrainingRoutineSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only return routines belonging to the currently authenticated user
+        return TrainingRoutine.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        # Automatically associate the new routine with the logged-in user
+        serializer.save(user=self.request.user)
+
+class TrainingRoutineDetailView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = TrainingRoutineSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Ensure users can only access/modify their own routines
+        return TrainingRoutine.objects.filter(user=self.request.user)
