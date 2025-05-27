@@ -54,7 +54,7 @@ def get_profile(access_token):
 # --- Main Script Execution ---
 if __name__ == "__main__":
 
-    test_username = f"Ichigo"
+    test_username = f"Ichigosan"
     test_password = "SubSoulReaper"
     test_email = f"ichigo@gmail.com"
     user_age_to_set = 30

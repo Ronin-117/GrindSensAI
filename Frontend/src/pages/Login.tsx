@@ -1,52 +1,234 @@
 import { useState } from 'react';
+import { createProfileApi, loginUserApi, registerUserApi } from './api';
+// If you use react-router-dom for navigation after login/signup:
+import { useNavigate } from 'react-router-dom';
+
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
+  const navigate = useNavigate(); // Uncomment if using react-router-dom
 
-  const handleToggle = (isLogin: boolean) => {
-    setIsLogin(isLogin);
+  // Login form state
+  const [loginUsername, setLoginUsername] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+
+  // Signup form state
+  const [signupUsername, setSignupUsername] = useState('');
+  const [signupEmail, setSignupEmail] = useState('');
+  const [signupPassword, setSignupPassword] = useState('');
+  const [signupConfirmPassword, setSignupConfirmPassword] = useState('');
+  const [signupAge, setSignupAge] = useState('');
+  const [signupHeight, setSignupHeight] = useState('');
+  const [signupWeight, setSignupWeight] = useState('');
+  const [signupBio, setSignupBio] = useState('');
+
+  // General state
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
+
+
+  const handleToggle = (isLoginView) => {
+    setIsLogin(isLoginView);
+    setError('');
+    setSuccessMessage('');
+    // Clear form fields on toggle
+    setLoginUsername('');
+    setLoginPassword('');
+    setSignupUsername('');
+    setSignupEmail('');
+    setSignupPassword('');
+    setSignupConfirmPassword('');
+    setSignupAge('');
+    setSignupHeight('');
+    setSignupWeight('');
+    setSignupBio('');
   };
 
+  const handleLoginSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+    setLoading(true);
+
+    try {
+      const response = await loginUserApi({
+        username: loginUsername,
+        password: loginPassword,
+      });
+      const { access, refresh } = response.data;
+      sessionStorage.setItem('accessToken', access);
+      sessionStorage.setItem('refreshToken', refresh); // Good practice to store refresh token too
+
+      setSuccessMessage('Login successful! Redirecting...');
+      console.log('Login successful:', response.data);
+      // TODO: Update global auth state (e.g., via Context API or Redux)
+      // TODO: Navigate to dashboard or protected route
+      navigate('/dashboard'); // Example navigation
+      setTimeout(() => { // Simulate redirection or next step
+        setLoading(false);
+        // navigate('/dashboard');//WHT IS THIS FOR???????????????????????
+        alert('Login Successful! Access token stored in sessionStorage.');
+      }, 1000);
+
+    } catch (err) {
+      console.error('Login error:', err.response ? err.response.data : err.message);
+      setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
+      setLoading(false);
+    }
+  };
+
+  const handleSignupSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMessage('');
+
+    if (signupPassword !== signupConfirmPassword) {
+      setError("Passwords don't match!");
+      return;
+    }
+    setLoading(true);
+
+    try {
+      // 1. Register User
+      await registerUserApi({
+        username: signupUsername,
+        email: signupEmail,
+        password: signupPassword,
+      });
+      setSuccessMessage('User registration successful! Logging in...');
+
+      // 2. Login the newly registered user to get tokens
+      const loginResponse = await loginUserApi({
+        username: signupUsername,
+        password: signupPassword,
+      });
+      const { access, refresh } = loginResponse.data;
+      sessionStorage.setItem('accessToken', access);
+      sessionStorage.setItem('refreshToken', refresh);
+      setSuccessMessage('Login successful after signup! Checking for profile data...');
+
+      // 3. Create Profile if optional data is provided
+      const profileData = {};
+      if (signupAge) profileData.age = parseInt(signupAge, 10);
+      if (signupHeight) profileData.height = parseInt(signupHeight, 10);
+      if (signupWeight) profileData.weight = parseInt(signupWeight, 10);
+      if (signupBio) profileData.bio = signupBio;
+
+      if (Object.keys(profileData).length > 0) {
+        try {
+            await createProfileApi(profileData);
+            setSuccessMessage('Signup complete and profile data saved! Redirecting...');
+        } catch (profileError) {
+            console.error('Profile creation error (user still created and logged in):', profileError.response ? profileError.response.data : profileError.message);
+            setError('User created and logged in, but profile creation failed: ' + (profileError.response?.data?.detail || profileError.message));
+            // User is still logged in, so tokens are stored. Proceed with that.
+        }
+      } else {
+        setSuccessMessage('Signup complete! Redirecting...');
+      }
+
+
+      console.log('Signup and subsequent login successful.');
+      // TODO: Update global auth state
+      // TODO: Navigate to dashboard or protected route
+      navigate('/dashboard');
+      setTimeout(() => { // Simulate redirection or next step
+        setLoading(false);
+        alert('Signup Successful! Access token stored in sessionStorage.');
+      }, 1000);
+
+
+    } catch (err) {
+      console.error('Signup process error:', err.response ? err.response.data : err.message);
+      let errorMessage = 'Signup process failed.';
+      if (err.response?.data) {
+        // Try to get specific error messages from Django validation
+        const errors = err.response.data;
+        if (errors.username) errorMessage = `Username: ${errors.username.join(', ')}`;
+        else if (errors.email) errorMessage = `Email: ${errors.email.join(', ')}`;
+        else if (errors.password) errorMessage = `Password: ${errors.password.join(', ')}`;
+        else if (errors.detail) errorMessage = errors.detail;
+        else {
+            errorMessage = JSON.stringify(errors);
+        }
+      }
+      setError(errorMessage);
+      setLoading(false);
+    }
+  };
+
+
   return (
-    <div>
+    <div style={{ maxWidth: '400px', margin: '40px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
       <h1>{isLogin ? 'Login' : 'Sign Up'}</h1>
 
       <div>
-        <button onClick={() => handleToggle(true)} style={{ fontWeight: isLogin ? 'bold' : 'normal' }}>
+        <button onClick={() => handleToggle(true)} style={{ fontWeight: isLogin ? 'bold' : 'normal', marginRight: '10px', padding: '8px 12px' }}>
           Login
         </button>
-        <button onClick={() => handleToggle(false)} style={{ fontWeight: !isLogin ? 'bold' : 'normal' }}>
+        <button onClick={() => handleToggle(false)} style={{ fontWeight: !isLogin ? 'bold' : 'normal', padding: '8px 12px' }}>
           Sign Up
         </button>
       </div>
 
+      {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
+      {successMessage && <p style={{ color: 'green', marginTop: '10px' }}>{successMessage}</p>}
+
+
       {isLogin ? (
-        <form>
-          <div>
-            <label htmlFor="username">Username:</label>
-            <input type="text" id="username" name="username" />
+        <form onSubmit={handleLoginSubmit} style={{ marginTop: '20px' }}>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="username">Username:</label><br />
+            <input type="text" id="username" name="username" value={loginUsername} onChange={(e) => setLoginUsername(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
           </div>
-          <div>
-            <label htmlFor="password">Password:</label>
-            <input type="password" id="password" name="password" />
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="password">Password:</label><br />
+            <input type="password" id="password" name="password" value={loginPassword} onChange={(e) => setLoginPassword(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
           </div>
-          <button type="submit">Log In</button>
+          <button type="submit" disabled={loading} style={{ padding: '10px 15px', width: '100%' }}>
+            {loading ? 'Logging In...' : 'Log In'}
+          </button>
         </form>
       ) : (
-        <form>
-          <div>
-            <label htmlFor="newUsername">Username:</label>
-            <input type="text" id="newUsername" name="newUsername" />
+        <form onSubmit={handleSignupSubmit} style={{ marginTop: '20px' }}>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="newUsername">Username:</label><br />
+            <input type="text" id="newUsername" name="newUsername" value={signupUsername} onChange={(e) => setSignupUsername(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
           </div>
-          <div>
-            <label htmlFor="newPassword">Password:</label>
-            <input type="password" id="newPassword" name="newPassword" />
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="newEmail">Email:</label><br />
+            <input type="email" id="newEmail" name="newEmail" value={signupEmail} onChange={(e) => setSignupEmail(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
           </div>
-          <div>
-            <label htmlFor="confirmPassword">Confirm Password:</label>
-            <input type="password" id="confirmPassword" name="confirmPassword" />
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="newPassword">Password:</label><br />
+            <input type="password" id="newPassword" name="newPassword" value={signupPassword} onChange={(e) => setSignupPassword(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
           </div>
-          <button type="submit">Sign Up</button>
+          <div style={{ marginBottom: '15px' }}>
+            <label htmlFor="confirmPassword">Confirm Password:</label><br />
+            <input type="password" id="confirmPassword" name="confirmPassword" value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
+          </div>
+
+          <p>Optional Profile Info:</p>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="newAge">Age:</label><br />
+            <input type="number" id="newAge" name="newAge" value={signupAge} onChange={(e) => setSignupAge(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="newHeight">Height (cm):</label><br />
+            <input type="number" id="newHeight" name="newHeight" value={signupHeight} onChange={(e) => setSignupHeight(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ marginBottom: '10px' }}>
+            <label htmlFor="newWeight">Weight (kg):</label><br />
+            <input type="number" id="newWeight" name="newWeight" value={signupWeight} onChange={(e) => setSignupWeight(e.target.value)} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
+          </div>
+          <div style={{ marginBottom: '15px' }}>
+            <label htmlFor="newBio">Bio:</label><br />
+            <textarea id="newBio" name="newBio" value={signupBio} onChange={(e) => setSignupBio(e.target.value)} rows="3" style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
+          </div>
+          <button type="submit" disabled={loading} style={{ padding: '10px 15px', width: '100%' }}>
+            {loading ? 'Signing Up...' : 'Sign Up'}
+          </button>
         </form>
       )}
     </div>
