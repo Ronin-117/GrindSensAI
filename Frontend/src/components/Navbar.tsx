@@ -12,13 +12,13 @@ function Navbar() {
           <Link to="/dashboard">Dashboard</Link>
         </li>
         <li>
-          <Link to="/todays-workout">Today's Workout</Link>
-        </li>
-        <li>
           <Link to="/profile">User Progress/Profile</Link>
         </li>
         <li>
-          <Link to="/evaluate-workout">Evaluate Workout</Link>
+          <Link to="/evaluate-workout">Workout Routines</Link>
+        </li>
+        <li>
+          <Link to="/todays-workout">Today's Workout</Link>
         </li>
       </ul>
     </nav>
