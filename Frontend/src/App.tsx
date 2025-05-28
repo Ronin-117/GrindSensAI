@@ -7,6 +7,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import TodaysWorkout from './pages/TodaysWorkout';
 import WorkoutMod from './pages/WorkoutMod';
+import WorkoutResult from './pages/WorkoutResult';
 
 
 function App() {
@@ -22,6 +23,7 @@ function App() {
           <Route path="/todays-workout" element={<TodaysWorkout />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/workout-mod" element={<WorkoutMod />} />
+          <Route path="/workout-result" element={<WorkoutResult />} />
         </Routes>
         </div>
         <div className="navbar">
