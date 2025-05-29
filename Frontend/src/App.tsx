@@ -1,4 +1,4 @@
-import { Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Link, Route, BrowserRouter as Router, Routes, useNavigate } from 'react-router-dom';
 import './App.css';
 import Navbar from './components/Navbar';
 import Dashboard from './pages/Dashboard';
@@ -8,6 +8,28 @@ import Profile from './pages/Profile';
 import TodaysWorkout from './pages/TodaysWorkout';
 import WorkoutMod from './pages/WorkoutMod';
 import WorkoutResult from './pages/WorkoutResult';
+
+
+// Simple Nav component to use useNavigate for logout
+const Navigation = () => {
+  const navigate = useNavigate();
+  const isLoggedIn = !!sessionStorage.getItem('accessToken');
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('accessToken');
+    sessionStorage.removeItem('refreshToken');
+    navigate('/login'); // Use navigate for programmatic navigation
+  };
+
+  return (
+    <nav style={{ padding: '10px', background: '#f0f0f0', marginBottom: '20px' }}>
+      <Link to="/" style={{ marginRight: '10px' }}>Home</Link>
+      {!isLoggedIn && <Link to="/login" style={{ marginRight: '10px' }}>Login/Signup</Link>}
+      {isLoggedIn && <Link to="/profile" style={{ marginRight: '10px' }}>Profile</Link>}
+      {isLoggedIn && <button onClick={handleLogout} style={{ float: 'right', background: 'none', border: '1px solid #ccc', padding: '5px 10px', cursor: 'pointer' }}>Logout</button>}
+    </nav>
+  );
+};
 
 
 function App() {

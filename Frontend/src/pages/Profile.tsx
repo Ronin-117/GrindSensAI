@@ -1,117 +1,118 @@
-// filepath: src/pages/Profile.tsx (or your chosen path)
-import React from 'react';
+// src/pages/ProfilePage.tsx
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getProfileApi } from './api'; // Importing from api.js
 
-const Profile = () => {
-  // Mock user data
-  const userData = {
-    name: 'Alex Doe',
-    age: 30,
-    height: '175 cm', // Data uses correct spelling
-    weight: '70 kg',  // Data uses correct spelling
-    heatLevel: 7,     // Example heat level (out of 10)
-  };
+// Define an interface for the expected profile data structure
+// This helps TypeScript understand the shape of `response.data`
+interface UserProfileData {
+  id: number;
+  user: number; // Assuming this is the user's ID from Django User model
+  username: string;
+  email: string;
+  first_name: string;
+  last_name: string;
+  age?: number;     // Optional fields
+  bio?: string;
+  height?: number;
+  weight?: number;
+  // Add any other fields your backend UserProfileSerializer returns
+}
 
-  const maxHeatSymbols = 10; // To show heat level out of 10
+function ProfilePage() {
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
 
-  const styles: { [key: string]: React.CSSProperties } = {
-    container: {
-      padding: '20px',
-      fontFamily: 'sans-serif', // Plain font
-      display: 'flex',
-      flexDirection: 'column',
-      // Content will be left-aligned by default, matching sketch's general layout
-    },
-    pageTitle: {
-      fontSize: '32px', // Large title as in sketch
-      fontWeight: 'bold',
-      margin: '0 0 25px 0', // Space below title
-      // textAlign: 'left', // Default
-    },
-    profileSection: {
-      display: 'flex',
-      alignItems: 'flex-start', // Align icon top with details top
-      marginBottom: '30px', // Space before HEAT section
-    },
-    profileIconPlaceholder: {
-      width: '80px', // Size based on sketch proportion
-      height: '80px',
-      borderRadius: '50%', // Circular icon
-      border: '2px solid black', // Plain border
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      fontSize: '40px', // Size for the placeholder person symbol
-      marginRight: '25px', // Space between icon and details
-      flexShrink: 0, // Prevent icon from shrinking
-    },
-    userDetails: {
-      display: 'flex',
-      flexDirection: 'column',
-      paddingTop: '5px', // Slight adjustment to vertically align text with icon center
-    },
-    detailItem: {
-      fontSize: '18px', // Font size for user details
-      lineHeight: '1.6', // Spacing between detail lines, mimicking sketch
-      // Values are directly appended to the labels as per simplified sketch rendering
-    },
-    heatSection: {
-      marginTop: '10px', // Space above HEAT section
-      // textAlign: 'left', // Default
-    },
-    heatLabel: {
-      fontSize: '20px', // "HEAT:" text size
-      fontWeight: 'bold', // "HEAT:" appears bolder in sketch
-      marginRight: '10px',
-      display: 'inline-block', // To sit next to symbols
-    },
-    heatSymbolsContainer: {
-      display: 'inline-block', // Keep symbols on the same line as label
-    },
-    heatSymbol: {
-      fontSize: '24px', // Size of the circle symbols (●/○)
-      margin: '0 2px', // Small spacing between symbols
-      lineHeight: '1',   // Helps align symbols neatly with the "HEAT:" text
-    },
-  };
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        setError('You are not logged in. Redirecting to login...');
+        setLoading(false);
+        setTimeout(() => navigate('/login'), 2000);
+        return;
+      }
 
-  // Generate heat symbols (filled and empty circles)
-  const heatSymbolsDisplay = [];
-  for (let i = 0; i < maxHeatSymbols; i++) {
-    heatSymbolsDisplay.push(
-      <span key={i} style={styles.heatSymbol}>
-        {i < userData.heatLevel ? '●' : '○'} {/* ● for filled, ○ for empty */}
-      </span>
-    );
+      try {
+        setLoading(true);
+        // When calling getProfileApi from a .js file, response will be AxiosResponse<any>
+        // We can then cast response.data to our defined interface
+        const response = await getProfileApi();
+        setProfile(response.data as UserProfileData); // Type assertion here
+        setError('');
+      } catch (err: any) { // Catch as 'any' or a more specific error type
+        console.error('Failed to fetch profile:', err);
+        if (err.response && err.response.status === 401) {
+          setError('Your session may have expired. Please log in again. Redirecting...');
+          sessionStorage.removeItem('accessToken');
+          sessionStorage.removeItem('refreshToken');
+          setTimeout(() => navigate('/login'), 3000);
+        } else if (err.response && err.response.status === 404) {
+            setError('Profile not found. It might need to be created if not done during signup.');
+        } else {
+          setError(err.message || 'Failed to load profile data.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [navigate]);
+
+  if (loading) {
+    return <div style={styles.container}><p>Loading profile...</p></div>;
   }
-  // The "O O G" in the sketch is interpreted as a conceptual representation.
-  // "out of 10" implies 10 symbols for clarity.
+
+  if (error) {
+    return <div style={styles.container}><p style={{ color: 'red' }}>Error: {error}</p></div>;
+  }
+
+  if (!profile) {
+    return <div style={styles.container}><p>No profile data available. Your profile might not have been created yet.</p></div>;
+  }
 
   return (
     <div style={styles.container}>
-      <h1 style={styles.pageTitle}>Profile</h1>
-
-      <div style={styles.profileSection}>
-        <div style={styles.profileIconPlaceholder}>
-          👤 {/* Unicode person symbol as a placeholder */}
-        </div>
-        <div style={styles.userDetails}>
-          {/* Displaying details as "Label Value" on each line */}
-          <div style={styles.detailItem}>Name {userData.name}</div>
-          <div style={styles.detailItem}>Age {userData.age}</div>
-          {/* Using "hight" and "wieght" as labels to match the sketch's text */}
-          <div style={styles.detailItem}>hight {userData.height}</div>
-          <div style={styles.detailItem}>wieght {userData.weight}</div>
-        </div>
+      <h1>Your Profile</h1>
+      <div style={styles.profileDetail}>
+        <strong>Username:</strong> {profile.username || 'N/A'}
       </div>
-
-      <div style={styles.heatSection}>
-        <span style={styles.heatLabel}>HEAT:</span>
-        <div style={styles.heatSymbolsContainer}>
-          {heatSymbolsDisplay}
-        </div>
+      <div style={styles.profileDetail}>
+        <strong>Age:</strong> {profile.age ?? 'N/A'}
       </div>
+      <div style={styles.profileDetail}>
+        <strong>Height (cm):</strong> {profile.height ?? 'N/A'}
+      </div>
+      <div style={styles.profileDetail}>
+        <strong>Weight (kg):</strong> {profile.weight ?? 'N/A'}
+      </div>
+      <div style={styles.profileDetail}>
+        <strong>Bio:</strong>
+        <p style={{ marginTop: '5px', whiteSpace: 'pre-wrap' }}>{profile.bio || 'No bio provided.'}</p>
+      </div>
+      {/* <button onClick={() => navigate('/profile/edit')}>Edit Profile</button> */}
     </div>
   );
+}
+
+const styles = {
+  container: {
+    maxWidth: '600px',
+    margin: '40px auto',
+    padding: '20px',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    fontFamily: 'Arial, sans-serif',
+    marginRight:'500px'
+  } as React.CSSProperties,
+  profileDetail: {
+    marginBottom: '15px',
+    paddingBottom: '10px',
+    borderBottom: '1px solid #eee',
+  } as React.CSSProperties,
 };
 
-export default Profile;
+export default ProfilePage;

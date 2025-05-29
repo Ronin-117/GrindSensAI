@@ -1,12 +1,11 @@
-import { useState } from 'react';
-import { createProfileApi, loginUserApi, registerUserApi } from './api';
-// If you use react-router-dom for navigation after login/signup:
+// src/Login.tsx
+import React, { useState } from 'react'; // Import React explicitly
 import { useNavigate } from 'react-router-dom';
-
+import { createProfileApi, loginUserApi, registerUserApi } from './api'; // Imports from api.js
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
-  const navigate = useNavigate(); // Uncomment if using react-router-dom
+  const navigate = useNavigate();
 
   // Login form state
   const [loginUsername, setLoginUsername] = useState('');
@@ -28,7 +27,7 @@ function Login() {
   const [successMessage, setSuccessMessage] = useState('');
 
 
-  const handleToggle = (isLoginView) => {
+  const handleToggle = (isLoginView: boolean) => { // Type annotation for parameter
     setIsLogin(isLoginView);
     setError('');
     setSuccessMessage('');
@@ -45,40 +44,38 @@ function Login() {
     setSignupBio('');
   };
 
-  const handleLoginSubmit = async (e) => {
+  const handleLoginSubmit = async (e: React.FormEvent<HTMLFormElement>) => { // Type event
     e.preventDefault();
     setError('');
     setSuccessMessage('');
     setLoading(true);
 
     try {
-      const response = await loginUserApi({
+      const response = await loginUserApi({ // Called from api.js
         username: loginUsername,
         password: loginPassword,
       });
+      // Assuming response.data from api.js will have 'access' and 'refresh'
+      // TypeScript might infer response.data as 'any' here.
+      // For better type safety, you could do:
+      // const { access, refresh } = response.data as { access: string; refresh: string; };
       const { access, refresh } = response.data;
       sessionStorage.setItem('accessToken', access);
-      sessionStorage.setItem('refreshToken', refresh); // Good practice to store refresh token too
+      sessionStorage.setItem('refreshToken', refresh);
 
       setSuccessMessage('Login successful! Redirecting...');
       console.log('Login successful:', response.data);
-      // TODO: Update global auth state (e.g., via Context API or Redux)
-      // TODO: Navigate to dashboard or protected route
-      navigate('/dashboard'); // Example navigation
-      setTimeout(() => { // Simulate redirection or next step
-        setLoading(false);
-        // navigate('/dashboard');//WHT IS THIS FOR???????????????????????
-        alert('Login Successful! Access token stored in sessionStorage.');
-      }, 1000);
+      navigate('/profile'); // Navigate to profile page
 
-    } catch (err) {
+    } catch (err: any) { // Catch as 'any' or a more specific error type
       console.error('Login error:', err.response ? err.response.data : err.message);
       setError(err.response?.data?.detail || 'Login failed. Please check your credentials.');
-      setLoading(false);
+    } finally {
+        setLoading(false); // Ensure loading is set to false in finally
     }
   };
 
-  const handleSignupSubmit = async (e) => {
+  const handleSignupSubmit = async (e: React.FormEvent<HTMLFormElement>) => { // Type event
     e.preventDefault();
     setError('');
     setSuccessMessage('');
@@ -90,26 +87,24 @@ function Login() {
     setLoading(true);
 
     try {
-      // 1. Register User
-      await registerUserApi({
+      await registerUserApi({ // Called from api.js
         username: signupUsername,
         email: signupEmail,
         password: signupPassword,
       });
       setSuccessMessage('User registration successful! Logging in...');
 
-      // 2. Login the newly registered user to get tokens
-      const loginResponse = await loginUserApi({
+      const loginResponse = await loginUserApi({ // Called from api.js
         username: signupUsername,
         password: signupPassword,
       });
+      // const { access, refresh } = loginResponse.data as { access: string; refresh: string; };
       const { access, refresh } = loginResponse.data;
       sessionStorage.setItem('accessToken', access);
       sessionStorage.setItem('refreshToken', refresh);
       setSuccessMessage('Login successful after signup! Checking for profile data...');
 
-      // 3. Create Profile if optional data is provided
-      const profileData = {};
+      const profileData: { age?: number; height?: number; weight?: number; bio?: string } = {};
       if (signupAge) profileData.age = parseInt(signupAge, 10);
       if (signupHeight) profileData.height = parseInt(signupHeight, 10);
       if (signupWeight) profileData.weight = parseInt(signupWeight, 10);
@@ -117,44 +112,34 @@ function Login() {
 
       if (Object.keys(profileData).length > 0) {
         try {
-            await createProfileApi(profileData);
+            await createProfileApi(profileData); // Called from api.js
             setSuccessMessage('Signup complete and profile data saved! Redirecting...');
-        } catch (profileError) {
-            console.error('Profile creation error (user still created and logged in):', profileError.response ? profileError.response.data : profileError.message);
+        } catch (profileError: any) {
+            console.error('Profile creation error:', profileError.response ? profileError.response.data : profileError.message);
             setError('User created and logged in, but profile creation failed: ' + (profileError.response?.data?.detail || profileError.message));
-            // User is still logged in, so tokens are stored. Proceed with that.
         }
       } else {
         setSuccessMessage('Signup complete! Redirecting...');
       }
-
-
       console.log('Signup and subsequent login successful.');
-      // TODO: Update global auth state
-      // TODO: Navigate to dashboard or protected route
-      navigate('/dashboard');
-      setTimeout(() => { // Simulate redirection or next step
-        setLoading(false);
-        alert('Signup Successful! Access token stored in sessionStorage.');
-      }, 1000);
+      navigate('/profile'); // Navigate to profile page
 
-
-    } catch (err) {
+    } catch (err: any) {
       console.error('Signup process error:', err.response ? err.response.data : err.message);
       let errorMessage = 'Signup process failed.';
       if (err.response?.data) {
-        // Try to get specific error messages from Django validation
         const errors = err.response.data;
         if (errors.username) errorMessage = `Username: ${errors.username.join(', ')}`;
         else if (errors.email) errorMessage = `Email: ${errors.email.join(', ')}`;
         else if (errors.password) errorMessage = `Password: ${errors.password.join(', ')}`;
         else if (errors.detail) errorMessage = errors.detail;
         else {
-            errorMessage = JSON.stringify(errors);
+            try { errorMessage = JSON.stringify(errors); } catch { /* ignore */ }
         }
       }
       setError(errorMessage);
-      setLoading(false);
+    } finally {
+        setLoading(false); // Ensure loading is set to false in finally
     }
   };
 
@@ -162,20 +147,12 @@ function Login() {
   return (
     <div style={{ maxWidth: '400px', margin: '40px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '8px' }}>
       <h1>{isLogin ? 'Login' : 'Sign Up'}</h1>
-
       <div>
-        <button onClick={() => handleToggle(true)} style={{ fontWeight: isLogin ? 'bold' : 'normal', marginRight: '10px', padding: '8px 12px' }}>
-          Login
-        </button>
-        <button onClick={() => handleToggle(false)} style={{ fontWeight: !isLogin ? 'bold' : 'normal', padding: '8px 12px' }}>
-          Sign Up
-        </button>
+        <button onClick={() => handleToggle(true)} style={{ fontWeight: isLogin ? 'bold' : 'normal', marginRight: '10px', padding: '8px 12px' }}>Login</button>
+        <button onClick={() => handleToggle(false)} style={{ fontWeight: !isLogin ? 'bold' : 'normal', padding: '8px 12px' }}>Sign Up</button>
       </div>
-
       {error && <p style={{ color: 'red', marginTop: '10px' }}>{error}</p>}
       {successMessage && <p style={{ color: 'green', marginTop: '10px' }}>{successMessage}</p>}
-
-
       {isLogin ? (
         <form onSubmit={handleLoginSubmit} style={{ marginTop: '20px' }}>
           <div style={{ marginBottom: '10px' }}>
@@ -208,7 +185,6 @@ function Login() {
             <label htmlFor="confirmPassword">Confirm Password:</label><br />
             <input type="password" id="confirmPassword" name="confirmPassword" value={signupConfirmPassword} onChange={(e) => setSignupConfirmPassword(e.target.value)} required style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
           </div>
-
           <p>Optional Profile Info:</p>
           <div style={{ marginBottom: '10px' }}>
             <label htmlFor="newAge">Age:</label><br />
@@ -224,7 +200,7 @@ function Login() {
           </div>
           <div style={{ marginBottom: '15px' }}>
             <label htmlFor="newBio">Bio:</label><br />
-            <textarea id="newBio" name="newBio" value={signupBio} onChange={(e) => setSignupBio(e.target.value)} rows="3" style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
+            <textarea id="newBio" name="newBio" value={signupBio} onChange={(e) => setSignupBio(e.target.value)} rows={3} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
           </div>
           <button type="submit" disabled={loading} style={{ padding: '10px 15px', width: '100%' }}>
             {loading ? 'Signing Up...' : 'Sign Up'}

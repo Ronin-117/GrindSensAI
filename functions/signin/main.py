@@ -54,7 +54,7 @@ def get_profile(access_token):
 # --- Main Script Execution ---
 if __name__ == "__main__":
 
-    test_username = f"Ichigosan"
+    test_username = f"Ichigo"
     test_password = "SubSoulReaper"
     test_email = f"ichigo@gmail.com"
     user_age_to_set = 30
@@ -62,12 +62,12 @@ if __name__ == "__main__":
     user_height = 50
     user_weight = 60
 
-    # 1. Signup
-    signup_response = signup_user(test_username, test_password, test_email)
-    if signup_response.status_code not in [200, 201]:
-        print("Signup failed. Exiting.")
-        exit()
-    # user_id = signup_response.json().get('id') # If your signup returns user details
+    # # 1. Signup
+    # signup_response = signup_user(test_username, test_password, test_email)
+    # if signup_response.status_code not in [200, 201]:
+    #     print("Signup failed. Exiting.")
+    #     exit()
+    # # user_id = signup_response.json().get('id') # If your signup returns user details
 
     # 2. Login to get access token
     access_token, refresh_token = login_user(test_username, test_password)
@@ -76,20 +76,20 @@ if __name__ == "__main__":
         exit()
     print(f"Access Token obtained: {access_token[:30]}...")
 
-    # 3. Create UserProfile data (e.g., age)
-    # First, try to get the profile. If using get_or_create in the view, this might create it.
-    # For a dedicated create endpoint:
-    print("\nAttempting to create profile...")
-    create_profile_response = create_profile(access_token, user_age_to_set, user_bio,user_height,user_weight)
+    # # 3. Create UserProfile data (e.g., age)
+    # # First, try to get the profile. If using get_or_create in the view, this might create it.
+    # # For a dedicated create endpoint:
+    # print("\nAttempting to create profile...")
+    # create_profile_response = create_profile(access_token, user_age_to_set, user_bio,user_height,user_weight)
 
-    if create_profile_response.status_code == 201: # 201 Created
-        print("Profile created successfully.")
-        profile_data_created = create_profile_response.json()
-        print(f"Created Profile Age: {profile_data_created.get('age')}")
-    elif create_profile_response.status_code == 400 and "already exists" in create_profile_response.text:
-        print("Profile already exists for this user (perhaps from a previous run or get_or_create).")
-    else:
-        print("Failed to create profile or unexpected response.")
+    # if create_profile_response.status_code == 201: # 201 Created
+    #     print("Profile created successfully.")
+    #     profile_data_created = create_profile_response.json()
+    #     print(f"Created Profile Age: {profile_data_created.get('age')}")
+    # elif create_profile_response.status_code == 400 and "already exists" in create_profile_response.text:
+    #     print("Profile already exists for this user (perhaps from a previous run or get_or_create).")
+    # else:
+    #     print("Failed to create profile or unexpected response.")
 
 
     # 4. Retrieve UserProfile data (which includes age) using the access token

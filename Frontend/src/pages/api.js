@@ -1,6 +1,7 @@
 // src/api.js
 import axios from 'axios';
 
+
 const API_BASE_URL = 'http://127.0.0.1:8000/api'; // Your Django API base URL
 
 const apiClient = axios.create({
@@ -34,13 +35,18 @@ export const createProfileApi = (profileData) => {
   });
 };
 
-// You might add getProfileApi later if needed on other pages
-// export const getProfileApi = () => {
-//   const token = getAccessToken();
-//   if (!token) return Promise.reject(new Error('No access token.'));
-//   return apiClient.get('/profile/', {
-//     headers: { Authorization: `Bearer ${token}` },
-//   });
-// };
+
+export const getProfileApi = () => {
+  const token = getAccessToken();
+  if (!token) {
+    return Promise.reject(new Error('No access token found. Please log in.'));
+  }
+  return apiClient.get('/profile/', { // Assuming your GET endpoint for profile is /api/profile/
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
 
 export default apiClient;
