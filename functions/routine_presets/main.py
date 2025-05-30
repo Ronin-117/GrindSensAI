@@ -1,5 +1,30 @@
-{
-  "training_routines": [
+# external_preset_seeder.py
+import requests
+import json
+
+# --- Configuration ---
+BASE_API_URL = "http://127.0.0.1:8000/api"  # Your Django API base URL
+ROUTINES_ENDPOINT = f"{BASE_API_URL}/routines/"
+# THIS IS A SECRET KEY - DO NOT HARDCODE IN PRODUCTION CLIENTS.
+# For a script like this run in a trusted environment, it's okay for demonstration.
+# In a real scenario, get this from an environment variable or secure config.
+ADMIN_PRESET_KEY = "YOUR_SECRET_KEY"
+
+# --- Helper to print responses nicely ---
+def print_response(response, context=""):
+    print(f"\n--- {context} ---")
+    print(f"URL: {response.url}")
+    print(f"Status Code: {response.status_code}")
+    try:
+        print("Response JSON:")
+        print(json.dumps(response.json(), indent=2))
+    except requests.exceptions.JSONDecodeError:
+        print("Response Text:")
+        print(response.text)
+    print("-" * 30)
+
+
+PRESET_ROUTINES_DATA = [
     {
       "routine_id": "BFS-101",
       "routine_name": "Beginner Full Body Strength",
@@ -8,6 +33,7 @@
       "training_split": "Full Body",
       "days_per_week": "3",
       "description": "This routine is designed for beginners to build a solid foundation of strength and muscle. It focuses on compound exercises that work multiple muscle groups simultaneously, promoting efficient and balanced development.",
+      "is_preset": True,
       "weekly_schedule": [
         {
           "day_of_week_or_number": "Day 1",
@@ -173,6 +199,7 @@
       "training_split": "Upper/Lower",
       "days_per_week": "4",
       "description": "This upper/lower split routine is designed for individuals with some weightlifting experience. It focuses on building strength and hypertrophy through a balanced approach, hitting each muscle group twice per week.",
+      "is_preset": True,
       "weekly_schedule": [
         {
           "day_of_week_or_number": "Day 1",
@@ -419,6 +446,7 @@
       "training_split": "Push/Pull/Legs",
       "days_per_week": "6",
       "description": "This intermediate Push/Pull/Legs (PPL) routine is designed for individuals with some weightlifting experience. It involves training specific muscle groups on different days, allowing for adequate rest and recovery. This split helps maximize muscle growth and strength gains.",
+      "is_preset": True,
       "weekly_schedule": [
         {
           "day_of_week_or_number": "Day 1",
@@ -763,6 +791,7 @@
       "training_split": "N/A (Focus on continuous activity)",
       "days_per_week": "3-5",
       "description": "This routine focuses on gradually increasing your cardiovascular endurance through a variety of activities and intensities. It's designed to be adaptable to your current fitness level and preferences.",
+      "is_preset": True,
       "weekly_schedule": [
         {
           "day_of_week_or_number": "Day 1",
@@ -876,6 +905,7 @@
       "training_split": "Full Body",
       "days_per_week": "3",
       "description": "This routine is designed to provide a foundation of strength, cardiovascular fitness, and flexibility, suitable for beginners aiming for general physical improvement.",
+      "is_preset": True,
       "weekly_schedule": [
         {
           "day_of_week_or_number": "Day 1",
@@ -1034,5 +1064,42 @@
       "precautions": "Consult with your doctor before starting any new exercise program. Listen to your body and stop if you experience any pain. Gradually increase the intensity and duration of your workouts over time.",
       "Coach_response": "This is a well-rounded routine for a beginner. It includes strength training, cardio, and flexibility work, hitting all the essential components of general fitness. Make sure to focus on form over weight, especially when you are first starting out."
     }
-  ]
-}
+]
+
+def create_preset_routine_via_api(routine_data):
+    headers = {
+        "Content-Type": "application/json",
+        "X-Admin-Preset-Key": ADMIN_PRESET_KEY # Custom header for preset creation
+    }
+    # The payload to the API must match what your TrainingRoutineSerializer expects.
+    # The `is_preset: True` tells the backend this is special.
+    # The backend will handle setting `user=None`.
+
+    response = requests.post(ROUTINES_ENDPOINT, json=routine_data, headers=headers)
+    print_response(response, f"CREATE PRESET: {routine_data.get('routine_name')}")
+    return response
+
+if __name__ == "__main__":
+    print("Starting external preset seeder via API...")
+    successful_creations = 0
+    failed_creations = 0
+
+    for routine_payload in PRESET_ROUTINES_DATA:
+        # It's harder for an external script to know if a preset already exists
+        # unless you have a GET endpoint that can query by routine_id and is_preset.
+        # For simplicity, this script will attempt to create them.
+        # Your API should ideally handle duplicate routine_id for presets gracefully (e.g., 400 error).
+
+        print(f"\nAttempting to create preset: {routine_payload.get('routine_name')}")
+        response = create_preset_routine_via_api(routine_payload)
+        if response.status_code == 201: # HTTP 201 Created
+            successful_creations += 1
+        else:
+            failed_creations += 1
+
+    print("\n--- Seeding Summary ---")
+    print(f"Successfully created presets: {successful_creations}")
+    print(f"Failed to create presets: {failed_creations}")
+    if failed_creations > 0:
+        print("Check API responses above for failure reasons.")
+    print("External preset seeding finished.")

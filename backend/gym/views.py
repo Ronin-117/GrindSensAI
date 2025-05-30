@@ -32,8 +32,6 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # get_or_create ensures a profile exists or is made if accessed,
-        # or you can just use get() if creation is strictly via UserProfileCreateView
         profile, created = UserProfile.objects.get_or_create(user=self.request.user)
         if created:
             print(f"Profile created on first access for user {self.request.user.username}")
@@ -44,7 +42,7 @@ class UserProfileDetailView(generics.RetrieveUpdateAPIView):
 
 class TrainingRoutineListCreateView(generics.ListCreateAPIView):
     serializer_class = TrainingRoutineSerializer
-    permission_classes = [permissions.IsAuthenticated] # User must be logged in to see/create
+
 
     def get_queryset(self):
         user = self.request.user
@@ -53,9 +51,27 @@ class TrainingRoutineListCreateView(generics.ListCreateAPIView):
             Q(is_preset=True) | Q(user=user)
         ).distinct().order_by('-is_preset', '-created_at') # Presets first, then user's
 
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            # If 'is_preset' is true in payload, perhaps use different permission
+            # This is a simplified check; real-world would be more robust
+            if self.request.data.get('is_preset') and self.request.headers.get('X-Admin-Preset-Key') == 'YOUR_SECRET_KEY':
+                return [permissions.AllowAny()] # Or a custom IsAdminOrSpecialKey permission
+        return [permissions.IsAuthenticated()]
+
+
     def perform_create(self, serializer):
-        # When a user creates a routine, it's NOT a preset and belongs to them.
-        serializer.save(user=self.request.user, is_preset=False)
+        is_preset_payload = self.request.data.get('is_preset', False)
+        admin_key_present = self.request.headers.get('X-Admin-Preset-Key') == 'YOUR_SECRET_KEY' # Example
+
+        if is_preset_payload and admin_key_present:
+            serializer.save(user=None, is_preset=True) # Preset creation
+        elif self.request.user.is_authenticated:
+            serializer.save(user=self.request.user, is_preset=False) # User's custom routine
+        else:
+            # This case should ideally be caught by permissions earlier
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Authentication required or invalid preset creation attempt.")
 
 class TrainingRoutineDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = TrainingRoutineSerializer

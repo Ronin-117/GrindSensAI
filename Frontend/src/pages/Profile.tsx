@@ -31,7 +31,7 @@ function ProfilePage() {
       if (!token) {
         setError('You are not logged in. Redirecting to login...');
         setLoading(false);
-        setTimeout(() => navigate('/login'), 2000);
+        setTimeout(() => navigate('/'), 2000);
         return;
       }
 
@@ -48,7 +48,7 @@ function ProfilePage() {
           setError('Your session may have expired. Please log in again. Redirecting...');
           sessionStorage.removeItem('accessToken');
           sessionStorage.removeItem('refreshToken');
-          setTimeout(() => navigate('/login'), 3000);
+          setTimeout(() => navigate('/'), 3000);
         } else if (err.response && err.response.status === 404) {
             setError('Profile not found. It might need to be created if not done during signup.');
         } else {

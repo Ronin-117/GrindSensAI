@@ -20,7 +20,7 @@ class Exercise(BaseModel):
     notes: Optional[str] = Field(None, description="Additional notes or tips for performing the exercise.")
 
 class WeeklyScheduleItem(BaseModel):
-    day_of_week_or_number: str = Field(..., description="Specifies the day or sequence number for this part of the schedule (e.g., 'Workout Day', 'Day 1 & 3: Upper Body').")
+    day_of_week_or_number: str = Field(..., description="Specifies the sequence number for this part of the schedule (e.g.,'Day 1', 'Day 2', 'Day 3 )(all days should be included even if its resting day).")
     session_focus: str = Field(..., description="The main focus of this training session (e.g., 'Full Body Strength', 'Upper Body Strength & Hypertrophy').")
     exercises: List[Exercise] = Field(..., description="List of exercises to be performed in this session.")
 
@@ -32,6 +32,7 @@ class TrainingRoutine(BaseModel):
     training_split: str = Field(..., description="The type of training split used (e.g., 'Full Body', 'Upper/Lower').")
     days_per_week: str = Field(..., description="Recommended number of training days per week (e.g., '2-3', '4').")
     description: str = Field(..., description="A brief description of the training routine.")
+    is_preset: bool = Field(..., description="always return False")
     weekly_schedule: List[WeeklyScheduleItem] = Field(..., description="The detailed weekly schedule of workouts.")
     cardio_guidelines: Optional[str] = Field(None, description="General guidelines for cardiovascular exercise alongside this routine.")
     flexibility_guidelines: Optional[str] = Field(None, description="General guidelines for flexibility work.")
@@ -50,7 +51,12 @@ chat = client.chats.create(model="gemini-2.0-flash",
                                 "response_schema": TrainingRoutine,
                             },
                         )
+while True:
+    prompt=str(input("User :"))
+    if prompt == "exit":
+        break
+    response = chat.send_message(prompt)
+    print("AI:",response.text)
 
-response = chat.send_message("can you give me a calestenics training routine. do you think 10 reps of inclined pushup and 20 reps of curl up a good idea")
-print(response.text)
+
 

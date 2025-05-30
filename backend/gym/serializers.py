@@ -80,15 +80,6 @@ class TrainingRoutineSerializer(serializers.ModelSerializer):
         instance.coach_response = validated_data.get('coach_response', instance.coach_response)
         instance.save()
 
-        # For nested updates, it's more complex:
-        # You need to decide how to handle existing vs. new schedule items/exercises.
-        # Options:
-        # 1. Delete all existing children and recreate (simplest for full replacement).
-        # 2. Match by ID and update, create new ones, delete ones not provided.
-        # For now, let's demonstrate a simple approach: clear and recreate weekly_schedule
-        # This is NOT ideal for partial updates but shows the concept.
-        # Consider using a library like `drf-writable-nested` for robust nested updates.
-
         weekly_schedule_data = validated_data.pop('weekly_schedule', None)
         if weekly_schedule_data is not None: # Only update if 'weekly_schedule' is in payload
             # Clear existing schedule items and their exercises
