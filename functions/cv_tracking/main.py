@@ -2,6 +2,10 @@ import cv2
 import mediapipe as mp
 import numpy as np
 from curl_r import curl_r
+from curl_l import curl_l
+from sit_up import sit_up
+
+
 
 
 # Initialize MediaPipe pose.
@@ -31,7 +35,7 @@ with mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5) as 
         
         try:
             landmarks = results.pose_landmarks.landmark
-            stage,counter = curl_r(landmarks,stage,counter)
+            stage,counter = sit_up(landmarks,stage,counter)
         
         except:
             pass
