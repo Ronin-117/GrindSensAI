@@ -155,13 +155,11 @@ const EvaluateWorkout: React.FC = () => {
     navigate(`/workout-mod`, { state: { mode: 'edit', routineId: routineDatabaseId, isPreset: isPreset } });
   };
 
-  const handleRoutineNameClick = (routineDatabaseId: number, routineName: string) => {
-    console.log(`Routine name clicked: ${routineName} (DB ID: ${routineDatabaseId})`);
-    // Potentially navigate to a detailed view page for the routine, or handle in /workout-mod
-    // For now, let's also send it to /workout-mod in a 'view' mode (or 'edit' if presets are directly editable by admins)
-    navigate(`/workout-mod`, { state: { mode: 'view', routineId: routineDatabaseId } });
+   const handleRoutineNameClick = (routineDatabaseId: number, routineName: string) => {
+    console.log(`Routine name clicked for display: ${routineName} (DB ID: ${routineDatabaseId})`);
+    // Navigate to /workout-display, passing the routine's database ID
+    navigate(`/workout-display`, { state: { routineId: routineDatabaseId } });
   };
-
 
   if (loading) {
     return <div style={styles.loadingErrorContainer}><p>Loading routines...</p></div>;
@@ -182,26 +180,20 @@ const EvaluateWorkout: React.FC = () => {
 
       <div style={styles.routineListContainer}>
         {routines.length === 0 && !loading && <p>No routines found. Get started by creating one!</p>}
-        {routines.map((routine) => (
+         {routines.map((routine) => (
           <div key={routine.id} style={styles.routineItemRow}>
             <div
               style={styles.routineNameBox}
-              onClick={() => handleRoutineNameClick(routine.id, routine.routine_name)}
+              onClick={() => handleRoutineNameClick(routine.id, routine.routine_name)} // Ensure this uses the routine.id
               role="button"
               tabIndex={0}
-              onKeyPress={(e) => e.key === 'Enter' && handleRoutineNameClick(routine.id, routine.routine_name)} // Accessibility
+              onKeyPress={(e) => e.key === 'Enter' && handleRoutineNameClick(routine.id, routine.routine_name)}
             >
               {routine.routine_name}
               {routine.is_preset && (
                 <span style={styles.presetIndicator}>(Preset)</span>
               )}
             </div>
-            {/*
-              Logic for edit button:
-              - If it's a preset, the "edit" button might trigger a "copy and edit" flow.
-              - If it's a user's routine, it directly edits.
-              The /workout-mod page will handle this logic based on the `isPreset` state passed.
-            */}
             <button
               style={styles.editButton}
               onClick={() => handleEditRoutine(routine.id, routine.routine_name, routine.is_preset)}

@@ -64,3 +64,15 @@ export const getTrainingRoutinesApi = () => {
     },
   });
 };
+
+export const getSpecificRoutineApi = (routineDbId) => {
+  const token = getAccessToken();
+  if (!token) {
+    return Promise.reject(new Error('No access token found. Please log in.'));
+  }
+  return apiClient.get(`/routines/${routineDbId}/`, { // Endpoint for specific routine
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};

@@ -6,6 +6,7 @@ import EvaluateWorkout from './pages/EvaluateWorkout';
 import Login from './pages/Login';
 import Profile from './pages/Profile';
 import TodaysWorkout from './pages/TodaysWorkout';
+import WorkoutDisplay from './pages/WorkoutDisplay';
 import WorkoutMod from './pages/WorkoutMod';
 import WorkoutResult from './pages/WorkoutResult';
 
@@ -46,6 +47,7 @@ function App() {
           <Route path="/todays-workout" element={<TodaysWorkout />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/workout-mod" element={<WorkoutMod />} />
+          <Route path="/workout-display" element={<WorkoutDisplay />} />
           <Route path="/workout-result" element={<WorkoutResult />} />
         </Routes>
         </div>
