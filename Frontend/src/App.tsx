@@ -26,6 +26,7 @@ const Navigation = () => {
       <Link to="/" style={{ marginRight: '10px' }}>Home</Link>
       {!isLoggedIn && <Link to="/login" style={{ marginRight: '10px' }}>Login/Signup</Link>}
       {isLoggedIn && <Link to="/profile" style={{ marginRight: '10px' }}>Profile</Link>}
+      {isLoggedIn && <Link to="/evaluate-workout" style={{ marginRight: '10px' }}>Routines</Link>}
       {isLoggedIn && <button onClick={handleLogout} style={{ float: 'right', background: 'none', border: '1px solid #ccc', padding: '5px 10px', cursor: 'pointer' }}>Logout</button>}
     </nav>
   );

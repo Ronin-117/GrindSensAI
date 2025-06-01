@@ -1,30 +1,79 @@
-import React from 'react';
+// src/pages/EvaluateWorkout.tsx (or wherever you place it)
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { getTrainingRoutinesApi } from './api'; // Adjust path as needed
 
-// Mock data for routines
-const mockRoutines = [
-  { id: '1', name: 'Routine 1' },
-  { id: '2', name: 'Routine 2' },
-  { id: '3', name: 'Routine 3' },
-  // Add more routines here if needed
-];
+// Define an interface for the routine data structure from the backend
+interface TrainingRoutineData {
+  id: number; // This is the primary key from your Django model
+  routine_id: string; // Your custom identifier like "PRESET_BFB_001"
+  routine_name: string;
+  is_preset: boolean;
+  user?: number | null; // User ID or null if it's a preset
+  // Add other fields you might want to use or display briefly
+  description?: string;
+  experience_level?: string;
+}
 
-const EvaluateWorkout = () => {
+const EvaluateWorkout: React.FC = () => {
+  const [routines, setRoutines] = useState<TrainingRoutineData[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const fetchRoutines = async () => {
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        setError('You are not logged in. Redirecting to login...');
+        setLoading(false);
+        setTimeout(() => navigate('/login'), 2000);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const response = await getTrainingRoutinesApi();
+        // Assuming response.data is an array of TrainingRoutineData
+        setRoutines(response.data as TrainingRoutineData[]);
+        setError('');
+      } catch (err: any) {
+        console.error('Failed to fetch routines:', err);
+        if (err.response && err.response.status === 401) {
+          setError('Session expired. Please log in again. Redirecting...');
+          sessionStorage.removeItem('accessToken');
+          sessionStorage.removeItem('refreshToken');
+          setTimeout(() => navigate('/login'), 3000);
+        } else {
+          setError(err.message || 'Failed to load routines.');
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoutines();
+  }, [navigate]);
+
+
   const styles: { [key: string]: React.CSSProperties } = {
     container: {
       padding: '20px',
-      fontFamily: 'sans-serif', // Plain font
-      marginRight : '500px'
+      fontFamily: 'sans-serif',
+      maxWidth: '800px', // Added max-width for better layout
+      margin: '0 auto',
+      marginRight : "500px", // Center the container
     },
     header: {
       display: 'flex',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: '30px', // Space below header
+      marginBottom: '30px',
     },
     title: {
       fontSize: '28px',
       fontWeight: 'bold',
-      margin: 0, // Remove default h1 margin
+      margin: 0,
     },
     createButton: {
       fontSize: '16px',
@@ -32,68 +81,95 @@ const EvaluateWorkout = () => {
       border: '1px solid black',
       background: 'transparent',
       cursor: 'pointer',
-      borderRadius: '4px', // Slight rounding, common for buttons
+      borderRadius: '4px',
     },
-    routineListContainer: {
-      // This div just holds the list of routines
-    },
-    routineItemRow: { // Each row containing a routine name and an edit button
+    routineListContainer: {},
+    routineItemRow: {
       display: 'flex',
-      alignItems: 'center', // Vertically align items in the row
-      marginBottom: '15px', // Space between routine rows
+      alignItems: 'center',
+      marginBottom: '15px',
     },
     routineNameBox: {
-      padding: '10px 18px', // Padding for the routine name
-      border: '1px solid black',
-      borderRadius: '8px', // Rounded corners as in sketch
-      fontSize: '16px',
-      marginRight: '15px', // Space between routine name box and edit button
-      // backgroundColor: 'transparent', // Default
-      minWidth: '120px', // Give it some base width
-      textAlign: 'center', // Center text in the box if desired
-    },
-    editButton: {
-      padding: '10px 15px', // Padding for the edit button
-      border: '1px solid black',
-      borderRadius: '8px', // Rounded corners as in sketch
-      background: 'transparent',
-      cursor: 'pointer',
-      display: 'flex', // To align text and icon inside the button
-      alignItems: 'center',
-      fontSize: '16px',
-    },
-    pencilIcon: {
-      marginLeft: '8px', // Space between "Edit" text and pencil icon
-      fontSize: '14px', // Slightly smaller or same size as button text
-    },
-    ellipsisBox: { // For the ".." item
       padding: '10px 18px',
       border: '1px solid black',
       borderRadius: '8px',
       fontSize: '16px',
-      color: '#333', // Slightly dimmer for ".."
-      textAlign: 'left', // Or 'center' if preferred
-      display: 'inline-block', // So it doesn't take full width unless content pushes it
-      minWidth: '120px', // Similar to routineNameBox
+      marginRight: '15px',
+      minWidth: '200px', // Adjusted width
+      textAlign: 'left', // Usually better for names
+      cursor: 'pointer', // If clickable to view details
+      flexGrow: 1, // Allow it to take available space
     },
+    presetIndicator: {
+      fontSize: '0.8em',
+      color: '#555',
+      display: 'block', // Make it appear on a new line within the box
+      marginTop: '4px',
+    },
+    editButton: {
+      padding: '10px 15px',
+      border: '1px solid black',
+      borderRadius: '8px',
+      background: 'transparent',
+      cursor: 'pointer',
+      display: 'flex',
+      alignItems: 'center',
+      fontSize: '16px',
+      flexShrink: 0, // Prevent button from shrinking
+    },
+    pencilIcon: {
+      marginLeft: '8px',
+      fontSize: '14px',
+    },
+    ellipsisBox: {
+      padding: '10px 18px',
+      border: '1px solid black',
+      borderRadius: '8px',
+      fontSize: '16px',
+      color: '#333',
+      textAlign: 'left',
+      display: 'inline-block',
+      minWidth: '200px',
+      flexGrow: 1,
+    },
+    loadingErrorContainer: {
+      textAlign: 'center',
+      marginTop: '50px',
+      fontSize: '18px',
+    } as React.CSSProperties,
   };
 
-  // --- Event Handlers (Placeholder) ---
+  // --- Event Handlers ---
   const handleCreateRoutine = () => {
     console.log('Create new routine clicked');
-    // Add logic to navigate to a creation form or open a modal
+    // Navigate to /workout-mod for creation (no ID needed)
+    // The state for 'mode' can be passed, or the /workout-mod page can infer 'create' if no ID.
+    navigate('/workout-mod', { state: { mode: 'create' } });
   };
 
-  const handleEditRoutine = (routineId: string, routineName: string) => {
-    console.log(`Edit clicked for routine: ${routineName} (ID: ${routineId})`);
-    // Add logic to navigate to an edit form or open a modal
+  const handleEditRoutine = (routineDatabaseId: number, routineName: string, isPreset: boolean) => {
+    console.log(`Edit clicked for routine: ${routineName} (DB ID: ${routineDatabaseId})`);
+    // Navigate to /workout-mod for editing, passing the routine's database ID
+    // We also pass an indicator if it's a preset, so the /workout-mod page
+    // can decide if it should be a "copy and edit" flow for presets.
+    navigate(`/workout-mod`, { state: { mode: 'edit', routineId: routineDatabaseId, isPreset: isPreset } });
   };
 
-  const handleRoutineNameClick = (routineName: string) => {
-    console.log(`Routine name clicked: ${routineName}`);
-    // Add logic to view routine details
+  const handleRoutineNameClick = (routineDatabaseId: number, routineName: string) => {
+    console.log(`Routine name clicked: ${routineName} (DB ID: ${routineDatabaseId})`);
+    // Potentially navigate to a detailed view page for the routine, or handle in /workout-mod
+    // For now, let's also send it to /workout-mod in a 'view' mode (or 'edit' if presets are directly editable by admins)
+    navigate(`/workout-mod`, { state: { mode: 'view', routineId: routineDatabaseId } });
   };
 
+
+  if (loading) {
+    return <div style={styles.loadingErrorContainer}><p>Loading routines...</p></div>;
+  }
+
+  if (error) {
+    return <div style={styles.loadingErrorContainer}><p style={{ color: 'red' }}>Error: {error}</p></div>;
+  }
 
   return (
     <div style={styles.container}>
@@ -105,32 +181,49 @@ const EvaluateWorkout = () => {
       </div>
 
       <div style={styles.routineListContainer}>
-        {mockRoutines.map((routine) => (
+        {routines.length === 0 && !loading && <p>No routines found. Get started by creating one!</p>}
+        {routines.map((routine) => (
           <div key={routine.id} style={styles.routineItemRow}>
             <div
               style={styles.routineNameBox}
-              onClick={() => handleRoutineNameClick(routine.name)} // Optional: make name box clickable
-              // role="button" // For accessibility if it's clickable
-              // tabIndex={0} // For accessibility if it's clickable
+              onClick={() => handleRoutineNameClick(routine.id, routine.routine_name)}
+              role="button"
+              tabIndex={0}
+              onKeyPress={(e) => e.key === 'Enter' && handleRoutineNameClick(routine.id, routine.routine_name)} // Accessibility
             >
-              {routine.name}
+              {routine.routine_name}
+              {routine.is_preset && (
+                <span style={styles.presetIndicator}>(Preset)</span>
+              )}
             </div>
+            {/*
+              Logic for edit button:
+              - If it's a preset, the "edit" button might trigger a "copy and edit" flow.
+              - If it's a user's routine, it directly edits.
+              The /workout-mod page will handle this logic based on the `isPreset` state passed.
+            */}
             <button
               style={styles.editButton}
-              onClick={() => handleEditRoutine(routine.id, routine.name)}
+              onClick={() => handleEditRoutine(routine.id, routine.routine_name, routine.is_preset)}
             >
-              Edit
-              <span style={styles.pencilIcon}>✏️</span> {/* Unicode pencil icon */}
+              {routine.is_preset ? 'Use & Edit' : 'Edit'}
+              <span style={styles.pencilIcon}>✏️</span>
             </button>
           </div>
         ))}
 
-        {/* The ".." item from the sketch */}
-        <div style={styles.routineItemRow}> {/* Placed in a row for consistent margin */}
-            <div style={styles.ellipsisBox}>
-            ..
+        {/* The ".." item can be a placeholder for "Load More" or just visual */}
+        {/* Or, if you want to make it a button to create a new one: */}
+        <div style={styles.routineItemRow}>
+            <div
+                style={{...styles.ellipsisBox, cursor: 'pointer', textAlign: 'center'}}
+                onClick={handleCreateRoutine}
+                role="button"
+                tabIndex={0}
+                onKeyPress={(e) => e.key === 'Enter' && handleCreateRoutine()}
+            >
+            + Add New Routine
             </div>
-            {/* No edit button for the ".." item as per sketch */}
         </div>
       </div>
     </div>

@@ -59,21 +59,21 @@ def get_specific_routine(access_token, routine_db_id):
 
 # --- Main Script Execution ---
 if __name__ == "__main__":
-    user1_username = f"Tony"
-    user1_password = "PasswordUser1!"
+    user1_username = "stark"
+    user1_password = "YzXFg49xE3ApzK3"
     user2_username = f"Steve"
     user2_password = "PasswordUser2!"
 
     # --- User 1 Operations ---
     print("===== USER 1 OPERATIONS =====")
-    signup_user(user1_username, user1_password)
+    #signup_user(user1_username, user1_password)
     user1_access_token, _ = login_user(user1_username, user1_password)
 
     if user1_access_token:
         # Sample routine data for User 1
         user1_routine_data = {
             "routine_id": f"BFB001", # Make routine_id unique for testing
-            "routine_name": "Beginner Full Body Strength - User 1",
+            "routine_name": "Beginner Full Body Strength - Tony test",
             "goal": "Build foundational strength and muscle, learn basic movements.",
             "experience_level": "Beginner",
             "training_split": "Full Body",
@@ -116,43 +116,43 @@ if __name__ == "__main__":
         print(f"Failed to log in User 1 ({user1_username})")
 
 
-    # --- User 2 Operations (to show data isolation) ---
-    print("\n\n===== USER 2 OPERATIONS =====")
-    signup_user(user2_username, user2_password)
-    user2_access_token, _ = login_user(user2_username, user2_password)
+    # # --- User 2 Operations (to show data isolation) ---
+    # print("\n\n===== USER 2 OPERATIONS =====")
+    # signup_user(user2_username, user2_password)
+    # user2_access_token, _ = login_user(user2_username, user2_password)
 
-    if user2_access_token:
-        user2_routine_data = {
-            "routine_id": f"UL002", # Make routine_id unique for testing
-            "routine_name": "Upper/Lower Split - User 2",
-            "goal": "Increase strength and hypertrophy.",
-            "experience_level": "Intermediate",
-            "training_split": "Upper/Lower",
-            "days_per_week": "4",
-            "description": "An upper/lower split routine for User 2.",
-            "weekly_schedule": [
-                {
-                    "day_of_week_or_number": "Upper Body Day 1",
-                    "session_focus": "Strength & Hypertrophy",
-                    "exercises": [
-                        {
-                            "exercise_name": "Bench Press",
-                            "target_muscles": ["Chest", "Shoulders", "Triceps"],
-                            "sets": "3-4",
-                            "reps_or_duration": "6-10 reps",
-                            "rest_period": "90-120 seconds"
-                        }
-                    ]
-                }
-            ],
-            "coach_response": "Solid plan for User 2."
-        }
-        create_training_routine(user2_access_token, user2_routine_data)
+    # if user2_access_token:
+    #     user2_routine_data = {
+    #         "routine_id": f"UL002", # Make routine_id unique for testing
+    #         "routine_name": "Upper/Lower Split - User 2",
+    #         "goal": "Increase strength and hypertrophy.",
+    #         "experience_level": "Intermediate",
+    #         "training_split": "Upper/Lower",
+    #         "days_per_week": "4",
+    #         "description": "An upper/lower split routine for User 2.",
+    #         "weekly_schedule": [
+    #             {
+    #                 "day_of_week_or_number": "Upper Body Day 1",
+    #                 "session_focus": "Strength & Hypertrophy",
+    #                 "exercises": [
+    #                     {
+    #                         "exercise_name": "Bench Press",
+    #                         "target_muscles": ["Chest", "Shoulders", "Triceps"],
+    #                         "sets": "3-4",
+    #                         "reps_or_duration": "6-10 reps",
+    #                         "rest_period": "90-120 seconds"
+    #                     }
+    #                 ]
+    #             }
+    #         ],
+    #         "coach_response": "Solid plan for User 2."
+    #     }
+    #     create_training_routine(user2_access_token, user2_routine_data)
 
-        print("\n--- Getting User 2's routines (should NOT see User 1's routines) ---")
-        get_training_routines(user2_access_token)
-    else:
-        print(f"Failed to log in User 2 ({user2_username})")
+    #     print("\n--- Getting User 2's routines (should NOT see User 1's routines) ---")
+    #     get_training_routines(user2_access_token)
+    # else:
+    #     print(f"Failed to log in User 2 ({user2_username})")
 
 
     # --- Attempt for User 1 to get User 2's routines (should not work if User 2 created one) ---

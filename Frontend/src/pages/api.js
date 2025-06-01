@@ -50,3 +50,17 @@ export const getProfileApi = () => {
 
 
 export default apiClient;
+
+//////////////////////////////////////////////////////
+
+export const getTrainingRoutinesApi = () => {
+  const token = getAccessToken();
+  if (!token) {
+    return Promise.reject(new Error('No access token found. Please log in.'));
+  }
+  return apiClient.get('/routines/', { // Your endpoint for listing routines
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
