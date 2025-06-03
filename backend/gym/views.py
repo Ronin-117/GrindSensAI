@@ -160,7 +160,7 @@ class GeminiExercise(BaseModel):
     notes: Optional[str] = Field(None, description="Additional notes or tips for performing the exercise.")
 
 class GeminiWeeklyScheduleItem(BaseModel):
-    day_of_week_or_number: str = Field(..., description="Specifies the sequence number for this part of the schedule (e.g.,'Day 1', 'Day 2', 'Day 3 )(all days should be included even if its resting day).")
+    day_of_week_or_number: str = Field(..., description="Specifies the sequence number for this part of the schedule (e.g.,'Day 1', 'Day 2', 'Day 3 )(all days should be included even if its resting day)(try to use consistant patterns, like dont use 'monday' pattern, if you are using 'day 1' pattern).")
     session_focus: str = Field(..., description="The main focus of this training session (e.g., 'Full Body Strength', 'Upper Body Strength & Hypertrophy').")
     exercises: List[GeminiExercise] = Field(..., description="List of exercises to be performed in this session.")
 
