@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views 
-from .views import UserCreateView, UserProfileCreateView, UserProfileDetailView, TrainingRoutineListCreateView, TrainingRoutineDetailView
+from .views import UserCreateView, UserProfileCreateView, UserProfileDetailView, TrainingRoutineListCreateView, TrainingRoutineDetailView,GenerateWorkoutView
 
 urlpatterns = [
     path('register/', UserCreateView.as_view(), name='user-register'),
@@ -9,4 +9,6 @@ urlpatterns = [
 
     path('routines/', TrainingRoutineListCreateView.as_view(), name='routine-list-create'),
     path('routines/<int:pk>/', TrainingRoutineDetailView.as_view(), name='routine-detail'),
+    path('generate-workout/', GenerateWorkoutView.as_view(), name='generate-workout'),
 ]
+

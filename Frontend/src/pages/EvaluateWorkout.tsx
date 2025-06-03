@@ -27,7 +27,7 @@ const EvaluateWorkout: React.FC = () => {
       if (!token) {
         setError('You are not logged in. Redirecting to login...');
         setLoading(false);
-        setTimeout(() => navigate('/login'), 2000);
+        setTimeout(() => navigate('/'), 2000);
         return;
       }
 
@@ -43,7 +43,7 @@ const EvaluateWorkout: React.FC = () => {
           setError('Session expired. Please log in again. Redirecting...');
           sessionStorage.removeItem('accessToken');
           sessionStorage.removeItem('refreshToken');
-          setTimeout(() => navigate('/login'), 3000);
+          setTimeout(() => navigate('/'), 3000);
         } else {
           setError(err.message || 'Failed to load routines.');
         }
