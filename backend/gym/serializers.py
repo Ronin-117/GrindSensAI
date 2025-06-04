@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise,WorkoutPlan, TrainingRoutine
+from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise,WorkoutPlan, TrainingRoutine,DailyWorkoutLog
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -122,3 +122,59 @@ class WorkoutPlanSerializer(serializers.ModelSerializer):
             'updated_at'
         ]
         read_only_fields = ['user', 'username', 'heat_level', 'created_at', 'updated_at', 'current_routine_details']
+
+class MinimalExerciseSerializer(serializers.ModelSerializer): # For nesting inside schedule
+    class Meta:
+        model = Exercise
+        fields = ['id', 'exercise_name', 'target_muscles', 'sets', 'reps_or_duration', 'notes']
+
+class MinimalWeeklyScheduleItemSerializer(serializers.ModelSerializer): # For nesting
+    exercises = MinimalExerciseSerializer(many=True, read_only=True)
+    class Meta:
+        model = WeeklyScheduleItem
+        fields = ['id', 'day_of_week_or_number', 'session_focus', 'exercises']
+
+class DailyWorkoutLogSerializer(serializers.ModelSerializer):
+    # This field is intended for writing the WorkoutPlan ID
+    workout_plan = serializers.PrimaryKeyRelatedField( # Renamed from workout_plan_id to match model field
+        queryset=WorkoutPlan.objects.all(),
+        # No 'source' needed if the serializer field name matches the model field name
+    )
+    # To show user for context (optional, as it's via workout_plan)
+    username = serializers.CharField(source='workout_plan.user.username', read_only=True, allow_null=True)
+    routine_name_from_plan = serializers.CharField(source='workout_plan.current_routine.routine_name', read_only=True, allow_null=True)
+
+
+    class Meta:
+        model = DailyWorkoutLog
+        fields = [
+            'id',
+            'workout_plan',         # Now this refers to the PrimaryKeyRelatedField above.
+                                    # It will accept an ID on write and return an ID on read.
+            'username',             # For context
+            'routine_name_from_plan',# For context
+            'date',
+            'routine_log_name',
+            'routine_used',         # This is the ID of the TrainingRoutine model
+            'logged_exercises',
+            'completion_percentage',
+            'session_notes'
+        ]
+        read_only_fields = ['id', 'username', 'routine_name_from_plan']
+
+    def validate_logged_exercises(self, value):
+        # Optional: Add custom validation for the structure of logged_exercises
+        if not isinstance(value, list):
+            raise serializers.ValidationError("logged_exercises must be a list.")
+        for item in value:
+            if not isinstance(item, dict):
+                raise serializers.ValidationError("Each item in logged_exercises must be a dictionary.")
+            # Add more checks for required keys like 'original_exercise_id', 'exercise_name', etc.
+            if 'exercise_name' not in item or 'target_sets' not in item:
+                 raise serializers.ValidationError("Exercise item missing required fields (e.g., exercise_name, target_sets).")
+        return value
+
+    def validate_completion_percentage(self, value):
+        if not (0 <= value <= 100):
+            raise serializers.ValidationError("Completion percentage must be between 0 and 100.")
+        return value

@@ -2,7 +2,7 @@ from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth.models import User
 from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise,WorkoutPlan,DailyWorkoutLog
-from .serializers import UserSerializer,UserProfileSerializer,TrainingRoutineSerializer,WorkoutPlanSerializer
+from .serializers import UserSerializer,UserProfileSerializer,TrainingRoutineSerializer,WorkoutPlanSerializer,DailyWorkoutLogSerializer
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied
@@ -16,6 +16,8 @@ from google.generativeai import types as GenAITypes
 from pydantic import BaseModel, Field, ValidationError as PydanticValidationError
 from typing import List, Optional
 from dotenv import load_dotenv
+from django.utils import timezone
+from datetime import datetime
 
 # Create your views here.
 
@@ -307,3 +309,110 @@ class UserWorkoutPlanView(generics.RetrieveUpdateAPIView):
         if created:
             print(f"WorkoutPlan created for user: {self.request.user.username}")
         return plan
+    
+#############################################
+
+class DailyLogGetOrCreateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        date_str = request.data.get('date')
+        if not date_str:
+            return Response({"error": "Date is required."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            log_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response({"error": "Invalid date format. Use YYYY-MM-DD."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = request.user
+        try:
+            workout_plan = WorkoutPlan.objects.get(user=user)
+        except WorkoutPlan.DoesNotExist:
+            return Response({"error": "User has no active workout plan."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not workout_plan.current_routine:
+            return Response({"error": "No routine selected in the current workout plan."}, status=status.HTTP_400_BAD_REQUEST)
+
+        daily_log, created = DailyWorkoutLog.objects.get_or_create(
+            workout_plan=workout_plan,
+            date=log_date,
+            defaults={
+                'routine_used': workout_plan.current_routine,
+                'routine_log_name': workout_plan.current_routine.routine_name,
+                'logged_exercises': self.get_exercises_for_day(workout_plan.current_routine, log_date),
+                'completion_percentage': 0 # Initial
+            }
+        )
+
+        if created:
+            print(f"Created new DailyWorkoutLog for {user.username} on {log_date}")
+        else:
+            # Optional: If log exists, verify/update logged_exercises if routine changed or day's exercises differ
+            # For simplicity now, we assume if it exists, it's mostly correct.
+            # A more robust system might check if routine_used matches workout_plan.current_routine
+            # and re-populate logged_exercises if they differ, preserving completed data.
+            pass
+
+
+        serializer = DailyWorkoutLogSerializer(daily_log) # You'll need this serializer
+        return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
+
+    def get_exercises_for_day(self, routine: TrainingRoutine, log_date: datetime.date):
+        # Determine which WeeklyScheduleItem corresponds to log_date
+        # This logic depends heavily on how 'day_of_week_or_number' is stored in WeeklyScheduleItem
+        # Example: if 'day_of_week_or_number' is 'Day 1', 'Day 2', ...
+        # And your routine is a N-day cycle.
+        # Or if it's 'Monday', 'Tuesday', etc.
+        
+        # Simplified: assumes "Day 1" maps to Monday, "Day 2" to Tuesday etc. for a 7-day cycle.
+        # OR if your 'day_of_week_or_number' is literally the day name.
+        day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        day_of_week_str_long = day_names[log_date.weekday()] # Monday is 0, Sunday is 6
+        day_of_week_str_short = day_of_week_str_long[:3] # "Mon", "Tue"
+        numeric_day_str = f"Day {log_date.weekday() + 1}" # "Day 1" for Monday
+
+        # Try to find the schedule item for today
+        # This query needs to be robust based on your 'day_of_week_or_number' format
+        schedule_item_for_today = routine.weekly_schedule.filter(
+            Q(day_of_week_or_number__iexact=day_of_week_str_long) |
+            Q(day_of_week_or_number__iexact=day_of_week_str_short) |
+            Q(day_of_week_or_number__iexact=numeric_day_str) 
+            # Add more Q objects if you have other formats like "Workout A"
+        ).first()
+
+        logged_exercises_list = []
+        if schedule_item_for_today:
+            for exercise in schedule_item_for_today.exercises.all().order_by('id'): # Order matters
+                logged_exercises_list.append({
+                    "original_exercise_id": exercise.pk,
+                    "exercise_name": exercise.exercise_name,
+                    "target_muscles": exercise.target_muscles, # Assuming this is a list
+                    "target_sets": exercise.sets,
+                    "target_reps_or_duration": exercise.reps_or_duration,
+                    "notes_from_routine": exercise.notes,
+                    "completed_status": "pending",
+                    "actual_sets_completed": 0,
+                    "actual_reps_per_set": [],
+                    "actual_duration_seconds": None,
+                    "weight_used_per_set": [],
+                    "user_notes_for_exercise": ""
+                })
+        return logged_exercises_list
+    
+class DailyLogDetailView(generics.RetrieveUpdateAPIView): # For PATCHing progress
+    serializer_class = DailyWorkoutLogSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = DailyWorkoutLog.objects.all() # Standard queryset
+
+    def get_queryset(self):
+        # Ensure user can only access/update their own logs
+        return DailyWorkoutLog.objects.filter(workout_plan__user=self.request.user)
+
+    def perform_update(self, serializer):
+        # You could add logic here to recalculate completion_percentage on the backend
+        # based on the updated logged_exercises for security/consistency,
+        # or trust the frontend's calculation sent in the PATCH payload.
+        # For now, we'll trust the frontend's calculation.
+        instance = serializer.save()
+        print(f"DailyWorkoutLog {instance.id} updated. Completion: {instance.completion_percentage}%")
+        # If using signals for heat_level, it will be triggered automatically.

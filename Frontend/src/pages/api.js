@@ -158,3 +158,26 @@ export const getUserWorkoutPlanApi = () => {
     },
   });
 };
+
+///////////////////////
+export const getOrCreateDailyLogApi = (dateString) => {
+  const token = getAccessToken();
+  if (!token) return Promise.reject(new Error('No access token.'));
+  // Assuming your backend has an endpoint that handles get-or-create logic based on date
+  // Or you might have separate GET and POST, and handle logic in frontend (more complex)
+  // Let's assume a smart endpoint:
+  return apiClient.post('/daily-logs/get-or-create-for-date/', { date: dateString }, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  // Alternative:
+  // return apiClient.get(`/daily-logs/?date=${dateString}`, { headers: { Authorization: `Bearer ${token}` } });
+  // And then if it's a 404, you'd POST to create. The combined endpoint is cleaner.
+};
+
+export const updateDailyLogApi = (logId, logData) => {
+  const token = getAccessToken();
+  if (!token) return Promise.reject(new Error('No access token.'));
+  return apiClient.patch(`/daily-logs/${logId}/`, logData, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+};
