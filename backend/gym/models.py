@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.utils import timezone
 
 
 # Create your models here.
@@ -60,3 +62,71 @@ class Exercise(models.Model):
 
     def __str__(self):
         return self.exercise_name
+    
+####################################################################
+
+class WorkoutPlan(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='workout_plan')
+
+    current_routine = models.ForeignKey(
+        TrainingRoutine,
+        on_delete=models.SET_NULL, 
+        null=True,
+        blank=True,
+        related_name='active_in_plans',
+        help_text="The training routine currently selected by the user for this plan."
+    )
+    heat_level = models.IntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(10)],
+        help_text="Activity level (0-10 heats) based on recent workout completion."
+    )
+    last_heat_level_update = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        routine_name = self.current_routine.routine_name if self.current_routine else "No routine selected"
+        return f"{self.user.username}'s Workout Plan ({routine_name})"
+
+
+class DailyWorkoutLog(models.Model):
+    workout_plan = models.ForeignKey(
+        WorkoutPlan,
+        on_delete=models.CASCADE,
+        related_name='daily_logs',
+        help_text="The workout plan this log belongs to."
+    )
+
+    date = models.DateField(default=timezone.now, help_text="The date this workout was performed or scheduled for.")
+    routine_log_name = models.CharField(max_length=255, blank=True, help_text="Name of the routine used for this day's log.")
+    routine_used = models.ForeignKey(
+        TrainingRoutine,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='logged_as_daily_workout',
+        help_text="Reference to the actual routine instance used for this log, if available."
+    )
+
+    logged_exercises = models.JSONField(default=list, help_text="Details of exercises logged for the day, including completion.")
+
+    completion_percentage = models.PositiveIntegerField(
+        default=0,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Overall completion percentage for this day's workout."
+    )
+    session_notes = models.TextField(blank=True, null=True, help_text="Overall notes for this workout session.")
+
+    class Meta:
+        unique_together = ('workout_plan', 'date') # A user should only have one log per day for a given plan
+        ordering = ['-date']
+
+    def __str__(self):
+        return f"Log for {self.workout_plan.user.username} on {self.date} ({self.completion_percentage}%)"
+
+    def save(self, *args, **kwargs):
+        if self.workout_plan and self.workout_plan.current_routine and not self.routine_used:
+            self.routine_used = self.workout_plan.current_routine
+            self.routine_log_name = self.workout_plan.current_routine.routine_name
+        super().save(*args, **kwargs)
