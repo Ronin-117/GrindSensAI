@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from django.core.validators import MinValueValidator, MaxValueValidator
+from datetime import timedelta, date as DateObject
 
 
 # Create your models here.
@@ -48,13 +49,7 @@ class WeeklyScheduleItem(models.Model):
 class Exercise(models.Model):
     schedule_item = models.ForeignKey(WeeklyScheduleItem, on_delete=models.CASCADE, related_name='exercises')
     exercise_name = models.CharField(max_length=255)
-    # For target_muscles: List[str]
-    # Option 1: JSONField (easiest for direct mapping, good for most DBs)
     target_muscles = models.JSONField(default=list)
-    # Option 2: CharField with comma separation (requires parsing)
-    # target_muscles_text = models.TextField(help_text="Comma-separated list of muscles")
-    # Option 3: ArrayField (PostgreSQL specific)
-    # target_muscles = ArrayField(models.CharField(max_length=100), blank=True, default=list)
     sets = models.CharField(max_length=50)
     reps_or_duration = models.CharField(max_length=100)
     rest_period = models.CharField(max_length=100)
@@ -67,21 +62,15 @@ class Exercise(models.Model):
 
 class WorkoutPlan(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='workout_plan')
-
     current_routine = models.ForeignKey(
-        TrainingRoutine,
-        on_delete=models.SET_NULL, 
+        'TrainingRoutine',
+        on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='active_in_plans',
         help_text="The training routine currently selected by the user for this plan."
     )
-    heat_level = models.IntegerField(
-        default=0,
-        validators=[MinValueValidator(0), MaxValueValidator(10)],
-        help_text="Activity level (0-10 heats) based on recent workout completion."
-    )
-    last_heat_level_update = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -89,37 +78,60 @@ class WorkoutPlan(models.Model):
         routine_name = self.current_routine.routine_name if self.current_routine else "No routine selected"
         return f"{self.user.username}'s Workout Plan ({routine_name})"
 
+    @property
+    def heat_level(self): 
+        """
+        Calculates the heat_level dynamically based on the
+        average completion percentage of DailyWorkoutLogs in the last 7 days.
+        """
+        today = timezone.now().date()
+        seven_days_ago = today - timedelta(days=6) 
+
+        recent_logs = self.daily_logs.filter( 
+            date__gte=seven_days_ago,
+            date__lte=today
+        )
+
+        if not recent_logs.exists():
+            return 0
+
+        total_percentage_sum = 0
+        for log in recent_logs:
+            total_percentage_sum += log.completion_percentage
+
+        days_in_period = 7
+        average_completion_percentage_over_period = total_percentage_sum / days_in_period
+
+        calculated_heat = round(average_completion_percentage_over_period / 10)
+        return max(0, min(10, calculated_heat))
 
 class DailyWorkoutLog(models.Model):
     workout_plan = models.ForeignKey(
-        WorkoutPlan,
+        WorkoutPlan, 
         on_delete=models.CASCADE,
-        related_name='daily_logs',
+        related_name='daily_logs', 
         help_text="The workout plan this log belongs to."
     )
-
     date = models.DateField(default=timezone.now, help_text="The date this workout was performed or scheduled for.")
     routine_log_name = models.CharField(max_length=255, blank=True, help_text="Name of the routine used for this day's log.")
     routine_used = models.ForeignKey(
-        TrainingRoutine,
+        'TrainingRoutine',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='logged_as_daily_workout',
         help_text="Reference to the actual routine instance used for this log, if available."
     )
-
     logged_exercises = models.JSONField(default=list, help_text="Details of exercises logged for the day, including completion.")
-
     completion_percentage = models.PositiveIntegerField(
         default=0,
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        validators=[MinValueValidator(0),MaxValueValidator(100)],
         help_text="Overall completion percentage for this day's workout."
     )
     session_notes = models.TextField(blank=True, null=True, help_text="Overall notes for this workout session.")
 
     class Meta:
-        unique_together = ('workout_plan', 'date') # A user should only have one log per day for a given plan
+        unique_together = ('workout_plan', 'date')
         ordering = ['-date']
 
     def __str__(self):
