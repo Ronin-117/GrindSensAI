@@ -1,7 +1,7 @@
 // src/pages/EvaluateWorkout.tsx (or wherever you place it)
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTrainingRoutinesApi } from './api'; // Adjust path as needed
+import { getTrainingRoutinesApi, getUserWorkoutPlanApi, updateUserWorkoutPlanApi } from './api'; // Adjust path as needed
 
 // Define an interface for the routine data structure from the backend
 interface TrainingRoutineData {
@@ -15,11 +15,63 @@ interface TrainingRoutineData {
   experience_level?: string;
 }
 
+interface WorkoutPlanData { // Interface for the fetched workout plan
+    id: number;
+    current_routine: number | null; // ID of the currently selected routine
+    // Add other fields if you need them from WorkoutPlan
+}
+
 const EvaluateWorkout: React.FC = () => {
   const [routines, setRoutines] = useState<TrainingRoutineData[]>([]);
+  const [currentSelectedRoutineId, setCurrentSelectedRoutineId] = useState<number | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
+  const [selectingRoutineId, setSelectingRoutineId] = useState<number | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string>('');
   const navigate = useNavigate();
+
+  const fetchData = useCallback(async () => {
+    const token = sessionStorage.getItem('accessToken');
+    if (!token) {
+      setError('You are not logged in. Redirecting to login...');
+      setLoading(false);
+      setTimeout(() => navigate('/'), 2000);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      // Fetch in parallel
+      const [routinesResponse, planResponse] = await Promise.all([
+        getTrainingRoutinesApi(),
+        getUserWorkoutPlanApi()
+      ]);
+
+      setRoutines(routinesResponse.data as TrainingRoutineData[]);
+      const planData = planResponse.data as WorkoutPlanData;
+      setCurrentSelectedRoutineId(planData.current_routine);
+
+    } catch (err: any) {
+      console.error('Failed to fetch data:', err);
+      if (err.response && err.response.status === 401) {
+        setError('Session expired. Please log in again. Redirecting...');
+        sessionStorage.removeItem('accessToken');
+        sessionStorage.removeItem('refreshToken');
+        setTimeout(() => navigate('/'), 3000);
+      } else {
+        setError(err.message || 'Failed to load initial data.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [navigate]); // useCallback dependency
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]); // useEffect will run when fetchData changes (which is once due to useCallback)
 
   useEffect(() => {
     const fetchRoutines = async () => {
@@ -88,17 +140,20 @@ const EvaluateWorkout: React.FC = () => {
       display: 'flex',
       alignItems: 'center',
       marginBottom: '15px',
+      padding: '10px', // Add some padding to the row itself for the highlight
+      borderRadius: '8px', // Match other border radiuses
+      transition: 'background-color 0.3s ease', // Smooth transition for highlight
     },
     routineNameBox: {
       padding: '10px 18px',
-      border: '1px solid black',
+      // border: '1px solid black', // Border can be conditional or part of highlighted style
       borderRadius: '8px',
       fontSize: '16px',
       marginRight: '15px',
-      minWidth: '200px', // Adjusted width
-      textAlign: 'left', // Usually better for names
-      cursor: 'pointer', // If clickable to view details
-      flexGrow: 1, // Allow it to take available space
+      minWidth: '200px',
+      textAlign: 'left',
+      cursor: 'pointer',
+      flexGrow: 1,
     },
     presetIndicator: {
       fontSize: '0.8em',
@@ -137,6 +192,34 @@ const EvaluateWorkout: React.FC = () => {
       marginTop: '50px',
       fontSize: '18px',
     } as React.CSSProperties,
+    selectButton: {
+      padding: '8px 12px',
+      border: '1px solid #28a745', // Green border
+      color: '#28a745', // Green text
+      background: 'transparent',
+      borderRadius: '8px',
+      cursor: 'pointer',
+      fontSize: '14px',
+      marginLeft: '10px', // Space from edit button
+      flexShrink: 0,
+    },
+    successMessage: {
+        color: 'green',
+        textAlign: 'center',
+        padding: '10px',
+        backgroundColor: '#e6ffed',
+        border: '1px solid #c3e6cb',
+        borderRadius: '4px',
+        marginTop: '10px',
+        marginBottom: '10px',
+    } as React.CSSProperties,
+    selectedRoutineRow: {
+      backgroundColor: '#e6f7ff', // A light blue for highlighting
+      border: '1px solid #91d5ff', // A slightly darker blue border
+    },
+    selectedRoutineNameBox: { // Optional: if you want specific style for name in selected row
+        fontWeight: 'bold', // Example
+    }
   };
 
   // --- Event Handlers ---
@@ -161,6 +244,34 @@ const EvaluateWorkout: React.FC = () => {
     navigate(`/workout-display`, { state: { routineId: routineDatabaseId } });
   };
 
+  const handleSelectRoutine = async (routineDbId: number) => {
+    setSelectingRoutineId(routineDbId);
+    setError('');
+    setSuccessMessage('');
+    try {
+      const response = await updateUserWorkoutPlanApi({ current_routine: routineDbId });
+      console.log('Workout plan updated:', response.data);
+      setCurrentSelectedRoutineId(routineDbId); // Update state immediately
+      setSuccessMessage(`Routine successfully selected!`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+    } catch (err: any) {
+      console.error('Failed to select routine:', err);
+      setError(err.response?.data?.detail || err.message || 'Could not select this routine.');
+    } finally {
+      setSelectingRoutineId(null);
+    }
+  };
+
+  
+
+  if (loading && routines.length === 0) { // Show initial loading only if routines are not yet fetched
+    return <div style={styles.loadingErrorContainer}><p>Loading routines...</p></div>;
+  }
+
+  if (error && routines.length === 0) { // Show error only if initial fetch failed and no routines to show
+    return <div style={styles.loadingErrorContainer}><p style={{ color: 'red' }}>Error: {error}</p></div>;
+  }
+
   if (loading) {
     return <div style={styles.loadingErrorContainer}><p>Loading routines...</p></div>;
   }
@@ -170,7 +281,7 @@ const EvaluateWorkout: React.FC = () => {
   }
 
   return (
-    <div style={styles.container}>
+     <div style={styles.container}>
       <div style={styles.header}>
         <h1 style={styles.title}>Workout Routines</h1>
         <button style={styles.createButton} onClick={handleCreateRoutine}>
@@ -178,37 +289,63 @@ const EvaluateWorkout: React.FC = () => {
         </button>
       </div>
 
+      {error && !selectingRoutineId && <p style={{ color: 'red', textAlign: 'center' }}>{error}</p>}
+      {successMessage && <p style={styles.successMessage}>{successMessage}</p>}
+
       <div style={styles.routineListContainer}>
         {routines.length === 0 && !loading && <p>No routines found. Get started by creating one!</p>}
-         {routines.map((routine) => (
-          <div key={routine.id} style={styles.routineItemRow}>
+        {routines.map((routine) => {
+          const isSelected = routine.id === currentSelectedRoutineId;
+          return (
             <div
-              style={styles.routineNameBox}
-              onClick={() => handleRoutineNameClick(routine.id, routine.routine_name)} // Ensure this uses the routine.id
-              role="button"
-              tabIndex={0}
-              onKeyPress={(e) => e.key === 'Enter' && handleRoutineNameClick(routine.id, routine.routine_name)}
+              key={routine.id}
+              style={{
+                ...styles.routineItemRow,
+                ...(isSelected ? styles.selectedRoutineRow : {}) // Apply highlight style
+              }}
             >
-              {routine.routine_name}
-              {routine.is_preset && (
-                <span style={styles.presetIndicator}>(Preset)</span>
+              <div
+                style={{
+                    ...styles.routineNameBox,
+                    border: isSelected ? 'none' : '1px solid black', // Conditional border
+                    ...(isSelected ? styles.selectedRoutineNameBox : {})
+                }}
+                onClick={() => handleRoutineNameClick(routine.id, routine.routine_name)}
+                role="button"
+                tabIndex={0}
+                onKeyPress={(e) => e.key === 'Enter' && handleRoutineNameClick(routine.id, routine.routine_name)}
+              >
+                {routine.routine_name}
+                {routine.is_preset && (
+                  <span style={styles.presetIndicator}>(Preset)</span>
+                )}
+              </div>
+              <button
+                style={styles.editButton}
+                onClick={() => handleEditRoutine(routine.id, routine.routine_name, routine.is_preset)}
+              >
+                {routine.is_preset ? 'Use & Edit' : 'Edit'}
+                <span style={styles.pencilIcon}>✏️</span>
+              </button>
+              {/* Conditionally render Select button or a "Selected" indicator */}
+              {isSelected ? (
+                <span style={{...styles.selectButton, color: '#28a745', borderColor: '#28a745', cursor: 'default' }}>✓ Selected</span>
+              ) : (
+                <button
+                  style={styles.selectButton}
+                  onClick={() => handleSelectRoutine(routine.id)}
+                  disabled={selectingRoutineId === routine.id}
+                >
+                  {selectingRoutineId === routine.id ? 'Selecting...' : 'Select'}
+                </button>
               )}
             </div>
-            <button
-              style={styles.editButton}
-              onClick={() => handleEditRoutine(routine.id, routine.routine_name, routine.is_preset)}
-            >
-              {routine.is_preset ? 'Use & Edit' : 'Edit'}
-              <span style={styles.pencilIcon}>✏️</span>
-            </button>
-          </div>
-        ))}
-
-        {/* The ".." item can be a placeholder for "Load More" or just visual */}
-        {/* Or, if you want to make it a button to create a new one: */}
-        <div style={styles.routineItemRow}>
+          );
+        })}
+        {/* ... (ellipsisBox for adding new routine) ... */}
+         <div style={styles.routineItemRow}>
             <div
-                style={{...styles.ellipsisBox, cursor: 'pointer', textAlign: 'center'}}
+                style={{...styles.ellipsisBox, cursor: 'pointer', textAlign: 'center', border: '1px solid black'}}
                 onClick={handleCreateRoutine}
                 role="button"
                 tabIndex={0}

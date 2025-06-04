@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise
+from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise,WorkoutPlan, TrainingRoutine
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -91,3 +91,34 @@ class TrainingRoutineSerializer(serializers.ModelSerializer):
                 for exercise_data in exercises_data:
                     Exercise.objects.create(schedule_item=schedule_item, **exercise_data)
         return instance
+    
+##############################
+
+class WorkoutPlanSerializer(serializers.ModelSerializer):
+    heat_level = serializers.IntegerField(read_only=True) # From @property
+    username = serializers.CharField(source='user.username', read_only=True)
+
+    # To show details of the current routine when GETTING the plan
+    current_routine_details = TrainingRoutineSerializer(source='current_routine', read_only=True, allow_null=True)
+
+    # To ACCEPT a routine ID when UPDATING the plan
+    # We use PrimaryKeyRelatedField to accept the ID of the TrainingRoutine
+    current_routine = serializers.PrimaryKeyRelatedField(
+        queryset=TrainingRoutine.objects.all(), # Or a more filtered queryset if needed
+        allow_null=True, # Allow setting it to null (deselect routine)
+        required=False # Not required for every update to WorkoutPlan
+    )
+
+    class Meta:
+        model = WorkoutPlan
+        fields = [
+            'id',
+            'user',
+            'username',
+            'current_routine',          # This field will be used for PATCH/PUT (expects routine ID)
+            'current_routine_details',  # This field will be used for GET (shows serialized routine)
+            'heat_level',
+            'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['user', 'username', 'heat_level', 'created_at', 'updated_at', 'current_routine_details']

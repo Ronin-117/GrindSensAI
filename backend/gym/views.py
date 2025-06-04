@@ -1,8 +1,8 @@
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from django.contrib.auth.models import User
-from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise
-from .serializers import UserSerializer,UserProfileSerializer,TrainingRoutineSerializer
+from .models import UserProfile, TrainingRoutine, WeeklyScheduleItem, Exercise,WorkoutPlan,DailyWorkoutLog
+from .serializers import UserSerializer,UserProfileSerializer,TrainingRoutineSerializer,WorkoutPlanSerializer
 from rest_framework.exceptions import ValidationError
 from django.db.models import Q
 from rest_framework.exceptions import PermissionDenied
@@ -291,3 +291,19 @@ class GenerateWorkoutView(APIView):
                 {"error": "Failed to generate workout from AI.", "details": error_detail},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+        
+class UserWorkoutPlanView(generics.RetrieveUpdateAPIView):
+    """
+    Retrieve or update the authenticated user's workout plan.
+    Users will typically have one workout plan.
+    """
+    serializer_class = WorkoutPlanSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        # Get or create a WorkoutPlan for the current user
+        # This ensures every authenticated user has a plan object we can update
+        plan, created = WorkoutPlan.objects.get_or_create(user=self.request.user)
+        if created:
+            print(f"WorkoutPlan created for user: {self.request.user.username}")
+        return plan

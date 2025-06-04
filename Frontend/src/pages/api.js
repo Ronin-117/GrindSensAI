@@ -132,3 +132,29 @@ export const updateRoutineApi = (routineDbId, routineData) => {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
+
+
+export const updateUserWorkoutPlanApi = (planData) => {
+  const token = getAccessToken();
+  if (!token) {
+    return Promise.reject(new Error('No access token. Please log in.'));
+  }
+  // The endpoint should be the one that allows PATCH/PUT to the user's specific WorkoutPlan
+  return apiClient.patch('/workout-plan/', planData, { // Using PATCH to update specific fields
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
+export const getUserWorkoutPlanApi = () => {
+  const token = getAccessToken();
+  if (!token) {
+    return Promise.reject(new Error('No access token. Please log in.'));
+  }
+  return apiClient.get('/workout-plan/', { // Your endpoint for the user's workout plan
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
