@@ -1,0 +1,26 @@
+USER_PROFILE
+    user
+    bio
+    age
+    weight
+    height
+
+TRAINING_ROUTINE
+    user
+    is_preset
+    .
+    .
+    .
+
+WORKOUT_PLAN
+    user
+    currently selected routine
+    log of workout completioon with dates and prcentange(link with TODAYS_WORKOUT)
+    heatlevel (out of 10 heats) based on precious 7 day workout
+
+TODAYS_WORKOUT
+    user (forign)(maybe)
+    WORKOUT_PLAN(forign)
+    dates
+    exercises from the selected routine and no of reps, and how much completed so far
+    completion percentage of that day
