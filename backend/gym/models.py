@@ -122,7 +122,7 @@ class DailyWorkoutLog(models.Model):
         related_name='logged_as_daily_workout',
         help_text="Reference to the actual routine instance used for this log, if available."
     )
-    logged_exercises = models.JSONField(default=list, help_text="Details of exercises logged for the day, including completion.")
+    logged_exercises = models.JSONField(default=list, help_text="Details of exercises logged for the day, including completion.", null=True,blank=True,)
     completion_percentage = models.PositiveIntegerField(
         default=0,
         validators=[MinValueValidator(0),MaxValueValidator(100)],

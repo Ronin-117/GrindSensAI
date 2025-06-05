@@ -399,7 +399,7 @@ class DailyLogGetOrCreateView(APIView):
                 })
         return logged_exercises_list
     
-class DailyLogDetailView(generics.RetrieveUpdateAPIView): # For PATCHing progress
+class DailyLogDetailView(generics.RetrieveUpdateAPIView): 
     serializer_class = DailyWorkoutLogSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = DailyWorkoutLog.objects.all() # Standard queryset

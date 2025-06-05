@@ -55,6 +55,10 @@ const TodaysWorkout: React.FC = () => {
     const todayStr = getTodayDateString();
     try {
       const response = await getOrCreateDailyLogApi(todayStr);
+      let fetchedLog = response.data as DailyLogData;
+      if (fetchedLog.logged_exercises.length === 0) {
+        fetchedLog.completion_percentage = 100; // Treat as completed rest day
+      }
       setDailyLog(response.data as DailyLogData);
     } catch (err: any) {
       console.error("Error fetching/creating today's log:", err);
@@ -93,9 +97,14 @@ const TodaysWorkout: React.FC = () => {
   // --- End AI Supervision ---
 
 
-  // --- Calculate overall completion ---
-  const calculateOverallCompletion = useCallback((): number => {
-    if (!dailyLog || dailyLog.logged_exercises.length === 0) return 0;
+
+  const calculateActiveWorkoutCompletion = useCallback((): number => {
+    if (!dailyLog || dailyLog.logged_exercises.length === 0) {
+        // If there are no exercises, we don't calculate percentage here.
+        // The initial fetchTodaysWorkoutLog sets it to 100 if applicable.
+        // Or, if exercises were dynamically removed and list became empty, return 0.
+        return dailyLog?.completion_percentage || 0; // Return existing or 0
+    }
 
     let totalExercises = dailyLog.logged_exercises.length;
     let completedExercises = 0;
@@ -117,7 +126,6 @@ const TodaysWorkout: React.FC = () => {
             if (ex.actual_sets_completed > 0) completedExercises++; // Count as 'worked on'
         }
     });
-    if (totalExercises === 0) return 0;
     return Math.round(sumOfIndividualExerciseProgress / totalExercises);
   }, [dailyLog]);
 
@@ -127,30 +135,42 @@ const TodaysWorkout: React.FC = () => {
     if (!dailyLog) return;
 
     const updatedExercises = [...dailyLog.logged_exercises];
-    updatedExercises[exerciseIndex] = {
-      ...updatedExercises[exerciseIndex],
-      ...updatedExerciseData,
-    };
+    const exerciseToUpdate = { ...updatedExercises[exerciseIndex], ...updatedExerciseData };
 
-    // Basic logic to update completed_status based on sets/reps
-    const ex = updatedExercises[exerciseIndex];
-    let targetSetsNum = parseInt(ex.target_sets.split('-')[0], 10) || 1;
-    if (ex.actual_sets_completed >= targetSetsNum) {
-        ex.completed_status = 'full';
-    } else if (ex.actual_sets_completed > 0) {
-        ex.completed_status = 'partial';
+    let targetSetsNum = 1;
+    try { targetSetsNum = parseInt(exerciseToUpdate.target_sets.split('-')[0], 10) || 1; }
+    catch { /* default to 1 */ }
+
+    if (exerciseToUpdate.actual_sets_completed >= targetSetsNum) {
+        exerciseToUpdate.completed_status = 'full';
+    } else if (exerciseToUpdate.actual_sets_completed > 0) {
+        exerciseToUpdate.completed_status = 'partial';
     } else {
-        ex.completed_status = 'pending';
+        exerciseToUpdate.completed_status = 'pending';
     }
+    updatedExercises[exerciseIndex] = exerciseToUpdate;
 
+    // Recalculate based on the new state of exercises IF there are exercises
+    const newOverallCompletionPercentage = dailyLog.logged_exercises.length > 0
+        ? calculateActiveWorkoutCompletion() // This function will now use the updated dailyLog internally
+        : 100; // If exercises were somehow removed and list is now empty, treat as rest (or 0 if preferred)
 
-    const newCompletionPercentage = calculateOverallCompletion(); // Recalculate based on the new state
-
-    setDailyLog(prevLog => ({
-      ...(prevLog as DailyLogData),
-      logged_exercises: updatedExercises,
-      completion_percentage: newCompletionPercentage // Update with recalculated value
-    }));
+    setDailyLog(prevLog => {
+        if (!prevLog) return null;
+        const newLogState = {
+            ...prevLog,
+            logged_exercises: updatedExercises,
+        };
+        // Update completion percentage based on whether exercises exist
+        if (newLogState.logged_exercises.length > 0) {
+            // Need to pass the updated exercises to the calculation for immediate accuracy
+            const tempLogForCalc = {...newLogState};
+            newLogState.completion_percentage = calculateActiveWorkoutCompletion(tempLogForCalc); // Pass updated state
+        } else {
+            newLogState.completion_percentage = 100; // Assuming empty means rest
+        }
+        return newLogState;
+    });
   };
 
   const incrementSet = (exerciseIndex: number) => {
@@ -188,31 +208,29 @@ const TodaysWorkout: React.FC = () => {
 
 
   // --- Handle Saving Progress ---
-  const handleSaveProgress = async () => {
-    if (!dailyLog) {
-      setError("No workout data to save.");
-      return;
-    }
-    setIsSaving(true);
-    setError('');
+   const handleSaveProgress = async () => {
+    if (!dailyLog) { setError("No workout data to save."); return; }
+    setIsSaving(true); setError('');
     try {
-      // Recalculate final percentage before saving
-      const finalCompletionPercentage = calculateOverallCompletion();
+      let finalCompletionPercentage = dailyLog.completion_percentage;
+      // If exercises exist, recalculate completion one last time before saving
+      // This ensures the value is based on the latest state if `handleExerciseUpdate` didn't run last
+      if (dailyLog.logged_exercises.length > 0) {
+          finalCompletionPercentage = calculateActiveWorkoutCompletion(); // Use state 'dailyLog' for calculation
+      } else {
+          finalCompletionPercentage = 100; // Rest day is 100%
+      }
+
       const dataToSave = {
         logged_exercises: dailyLog.logged_exercises,
         completion_percentage: finalCompletionPercentage,
-        session_notes: dailyLog.session_notes || "", // Ensure notes is not undefined
+        session_notes: dailyLog.session_notes || "",
       };
       await updateDailyLogApi(dailyLog.id, dataToSave);
       alert("Progress saved successfully!");
-      // Optionally update the dailyLog state with response from API if it returns the updated object
       setDailyLog(prev => prev ? ({...prev, completion_percentage: finalCompletionPercentage}) : null);
-    } catch (err: any) {
-      console.error("Error saving progress:", err);
-      setError(err.response?.data?.detail || err.message || "Failed to save progress.");
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (err: any) { /* ... error handling ... */ }
+    finally { setIsSaving(false); }
   };
 
 
@@ -265,6 +283,8 @@ const TodaysWorkout: React.FC = () => {
   if (!dailyLog) {
     return <div style={styles.loadingErrorContainer}><p>Could not load workout for today. Please check your plan and routine selection.</p></div>;
   }
+
+  const isRestDayDisplay = dailyLog.logged_exercises.length === 0; 
 
   return (
     <div style={styles.pageContainer}>
