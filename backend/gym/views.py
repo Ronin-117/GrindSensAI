@@ -403,7 +403,7 @@ class DailyLogDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = DailyWorkoutLogSerializer
     permission_classes = [permissions.IsAuthenticated]
     queryset = DailyWorkoutLog.objects.all() # Standard queryset
-
+    
     def get_queryset(self):
         # Ensure user can only access/update their own logs
         return DailyWorkoutLog.objects.filter(workout_plan__user=self.request.user)
