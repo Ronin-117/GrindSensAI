@@ -1,3 +1,5 @@
+#exes.py
+
 import mediapipe as mp
 from util import calculate_angle
 
@@ -134,6 +136,24 @@ def leg_raise(landmarks,stage,counter): #not sure if its working
     if angle < 100 and stage == 'down':
         stage = "up"
         counter += 1
+
+def jumping_jacks(landmarks,stage,counter): #to test
+
+    right_foot_index = landmarks[mp_pose.PoseLandmark.RIGHT_FOOT_INDEX.value].x
+    left_foot_index = landmarks[mp_pose.PoseLandmark.LEFT_FOOT_INDEX.value].x
+    right_index = landmarks[mp_pose.PoseLandmark.RIGHT_INDEX.value].y
+    left_index = landmarks[mp_pose.PoseLandmark.LEFT_INDEX.value].y
+    nose = landmarks[mp_pose.PoseLandmark.NOSE.value].y
+
+    if right_index > nose and left_index > nose and abs(right_foot_index - left_foot_index) > 100:
+        stage = "up"
+    if right_index < nose and left_index < nose and abs(right_foot_index - left_foot_index) < 100 and stage == 'up':
+        stage = "down"
+        counter += 1
+
+    return stage,counter
+
+
 
 
 
