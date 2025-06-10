@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views 
-from .views import UserCreateView, UserProfileCreateView, UserProfileDetailView, TrainingRoutineListCreateView, TrainingRoutineDetailView,GenerateWorkoutView,UserWorkoutPlanView , DailyLogGetOrCreateView, DailyLogDetailView
+from .views import UserCreateView, UserProfileCreateView, UserProfileDetailView, TrainingRoutineListCreateView, TrainingRoutineDetailView,GenerateWorkoutView,UserWorkoutPlanView , DailyLogGetOrCreateView, DailyLogDetailView,WorkoutContributionView
 
 urlpatterns = [
     path('register/', UserCreateView.as_view(), name='user-register'),
@@ -13,5 +13,6 @@ urlpatterns = [
     path('workout-plan/', UserWorkoutPlanView.as_view(), name='user-workout-plan'),
     path('daily-logs/get-or-create-for-date/', DailyLogGetOrCreateView.as_view(), name='daily-log-get-or-create'),
     path('daily-logs/<int:pk>/', DailyLogDetailView.as_view(), name='daily-log-detail'),
+    path('workout-contributions/', WorkoutContributionView.as_view(), name='workout-contributions'),
 ]
 

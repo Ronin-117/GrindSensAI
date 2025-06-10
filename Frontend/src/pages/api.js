@@ -181,3 +181,15 @@ export const updateDailyLogApi = (logId, logData) => {
     headers: { Authorization: `Bearer ${token}` },
   });
 };
+
+export const getWorkoutContributionsApi = () => {
+  const token = sessionStorage.getItem('accessToken');
+  if (!token) {
+    return Promise.reject(new Error('No access token. Please log in.'));
+  }
+  return apiClient.get('/workout-contributions/', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};

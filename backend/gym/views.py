@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field, ValidationError as PydanticValidationErro
 from typing import List, Optional
 from dotenv import load_dotenv
 from django.utils import timezone
-from datetime import datetime
+from datetime import datetime,timedelta
 
 # Create your views here.
 
@@ -416,3 +416,28 @@ class DailyLogDetailView(generics.RetrieveUpdateAPIView):
         instance = serializer.save()
         print(f"DailyWorkoutLog {instance.id} updated. Completion: {instance.completion_percentage}%")
         # If using signals for heat_level, it will be triggered automatically.
+
+class WorkoutContributionView(APIView):
+    """
+    Provides data for the GitHub-style contribution chart.
+    Returns a list of objects, each containing a date and a completion status.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        
+        # Define the time range (e.g., the last year)
+        one_year_ago = timezone.now().date() - timedelta(days=365)
+        
+        # Get all relevant daily logs for the user in the time range
+        # We only need the date and completion_percentage fields
+        logs = DailyWorkoutLog.objects.filter(
+            workout_plan__user=user,
+            date__gte=one_year_ago
+        ).values('date', 'completion_percentage')
+        
+        # The data is already in a good format: [{'date': date_obj, 'completion_percentage': int}, ...]
+        # DRF's Response will handle serializing the date objects to strings.
+        
+        return Response(list(logs))
