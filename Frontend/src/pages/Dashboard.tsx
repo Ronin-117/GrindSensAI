@@ -107,7 +107,7 @@ const Dashboard: React.FC = () => {
     if (percentage >= 95) return 4; // Completed fully
     if (percentage > 50) return 3;
     if (percentage > 0) return 2;
-    if (percentage === 0) return 1; // Attempted but 0%
+    if (percentage === 0) return 0; // Attempted but 0%
     return 0;
   };
 
@@ -162,7 +162,7 @@ const Dashboard: React.FC = () => {
       position: 'absolute', // Position relative to nearest positioned ancestor (or body)
       padding: '8px 12px',
       backgroundColor: '#161b22',
-      border: '1px solid #30363d',
+      border: '1px solidrgb(200, 204, 209)',
       borderRadius: '6px',
       color: '#c9d1d9',
       fontSize: '12px',
