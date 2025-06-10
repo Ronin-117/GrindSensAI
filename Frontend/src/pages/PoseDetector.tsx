@@ -35,7 +35,7 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
     // Internal logic state, managed with refs
     const stageRef = useRef<"down" | "up" | null>(null);
     const repCounterRef = useRef<number>(0);
-    const targetRepsRef = useRef<number>(10);
+    const targetRepsRef = useRef<number>(11);
 
     // Parse target reps when the exercise prop changes
     useEffect(() => {
@@ -104,10 +104,11 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
                   repCounterRef.current += 1;
                   onRepCounted(repCounterRef.current);
                   if (repCounterRef.current >= targetRepsRef.current) {
-                      onSetCompleted();
-                      repCounterRef.current = 0;
-                      stageRef.current = null;
-                      onRepCounted(0);
+                      console.log(`[PoseDetector] Set completed for ${exercise.exercise_name}! Notifying parent.`);
+                        onSetCompleted(); // Notify parent that the set is done
+                        repCounterRef.current = 0; // Reset for next set
+                        stageRef.current = null;
+                        onRepCounted(0);
                   }
               }
             } else {

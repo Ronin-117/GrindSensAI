@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOrCreateDailyLogApi, updateDailyLogApi } from './api'; // Ensure correct path
-import PoseDetector from './PoseDetector';
+import PoseDetector from './PoseDetector'; // Ensure this path is correct
 
 // Interfaces for the data structures
 interface LoggedExercise {
@@ -15,10 +15,10 @@ interface LoggedExercise {
   completed_status: 'pending' | 'partial' | 'full' | 'skipped';
   actual_sets_completed: number;
   actual_reps_per_set: (number | string)[];
-  actual_duration_seconds?: number | null;
-  weight_used_per_set?: (number | string)[];
-  user_notes_for_exercise?: string;
-  isSupervisionUIToggled?: boolean; // Flag to show/hide supervision UI for this exercise
+  // UI-only state properties
+  isSupervisionUIToggled?: boolean;
+  current_reps_in_ai_set?: number;
+  landmarkerLoadFailed?: boolean; // For disabling button if model fails
 }
 
 interface DailyLogData {
@@ -39,7 +39,6 @@ const TodaysWorkout: React.FC = () => {
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
-
   const [expandedExerciseIndex, setExpandedExerciseIndex] = useState<number | null>(null);
 
   const getTodayDateString = () => new Date().toISOString().split('T')[0];
@@ -53,19 +52,20 @@ const TodaysWorkout: React.FC = () => {
       let fetchedLog = response.data as DailyLogData;
       console.log("[FetchLog] Received log from API:", fetchedLog);
       if (fetchedLog.logged_exercises.length === 0 && fetchedLog.completion_percentage !== 100) {
-        fetchedLog.completion_percentage = 100; // Treat as completed rest day if backend didn't
+        fetchedLog.completion_percentage = 100;
       }
-      // Initialize UI state for supervision toggle for each exercise
       fetchedLog.logged_exercises = fetchedLog.logged_exercises.map(ex => ({
           ...ex,
-          isSupervisionUIToggled: false, // Initialize the toggle state
+          isSupervisionUIToggled: false,
+          landmarkerLoadFailed: false,
+          current_reps_in_ai_set: 0,
       }));
       setDailyLog(fetchedLog);
     } catch (err: any) {
       console.error("[FetchLog] Error:", err.response?.data || err.message);
       if (err.response && err.response.status === 401) {
         setError('Session expired. Redirecting to login...');
-        setTimeout(() => navigate('/'), 3000);
+        setTimeout(() => navigate('/login'), 3000);
       } else {
         setError(err.response?.data?.error || err.message || "Could not load today's workout.");
       }
@@ -79,75 +79,51 @@ const TodaysWorkout: React.FC = () => {
     fetchTodaysWorkoutLog();
   }, [fetchTodaysWorkoutLog]);
 
-  // Simpler unmount cleanup for TodaysWorkout
   useEffect(() => {
-    return () => {
-      console.log("TodaysWorkout UNMOUNTING");
-      // No direct MediaPipe cleanup here, ExerciseSupervision handles its own
-    };
+    return () => { console.log("TodaysWorkout UNMOUNTING"); };
   }, []);
 
-  // Function to recalculate and set overall completion percentage
-  const calculateAndUpdateOverallCompletion = useCallback((currentExercises: LoggedExercise[]): number => {
+  const calculateOverallCompletion = useCallback((currentExercises: LoggedExercise[]): number => {
     if (!currentExercises || currentExercises.length === 0) {
-        return 100; // Rest day or no exercises, consider 100%
+      return (dailyLog?.completion_percentage === 100 && dailyLog?.logged_exercises.length === 0) ? 100 : 0;
     }
-    
     let totalExercises = currentExercises.length;
     let sumOfIndividualExerciseProgress = 0;
-
     currentExercises.forEach(ex => {
-        if (ex.completed_status === 'full') {
-            sumOfIndividualExerciseProgress += 100;
-        } else if (ex.completed_status === 'partial') {
-            let targetSetsNum = 1;
-            try { targetSetsNum = parseInt(ex.target_sets.split('-')[0], 10) || 1; }
-            catch { /* ignore */ }
-            if (targetSetsNum > 0) {
-                 sumOfIndividualExerciseProgress += Math.min(100, (ex.actual_sets_completed / targetSetsNum) * 100);
-            }
+      if (ex.completed_status === 'full') sumOfIndividualExerciseProgress += 100;
+      else if (ex.completed_status === 'partial') {
+        let targetSetsNum = 1; try { targetSetsNum = parseInt(ex.target_sets.split('-')[0], 10) || 1; } catch { /* ignore */ }
+        if (targetSetsNum > 0) sumOfIndividualExerciseProgress += Math.min(100, (ex.actual_sets_completed / targetSetsNum) * 100);
+      }
+    });
+    return totalExercises > 0 ? Math.round(sumOfIndividualExerciseProgress / totalExercises) : 100;
+  }, [dailyLog?.completion_percentage, dailyLog?.logged_exercises.length]);
+
+
+  const handleExerciseUpdate = (exerciseIndex: number, updatedData: Partial<LoggedExercise>) => {
+    setDailyLog(prevLog => {
+      if (!prevLog) return null;
+
+      const updatedExercises = prevLog.logged_exercises.map((ex, idx) =>
+        idx === exerciseIndex ? { ...ex, ...updatedData } : ex
+      );
+
+      const exerciseToUpdate = updatedExercises[exerciseIndex];
+      if (exerciseToUpdate) {
+        const targetSetsParts = exerciseToUpdate.target_sets.split('-').map(s => parseInt(s.trim(), 10));
+        const maxTargetSets = targetSetsParts.length > 0 ? Math.max(...targetSetsParts.filter(n => !isNaN(n))) : 1;
+        
+        if (maxTargetSets > 0 && exerciseToUpdate.actual_sets_completed >= maxTargetSets) {
+            exerciseToUpdate.completed_status = 'full';
+        } else if (exerciseToUpdate.actual_sets_completed > 0) {
+            exerciseToUpdate.completed_status = 'partial';
+        } else {
+            exerciseToUpdate.completed_status = 'pending';
         }
-    });
-    const newPercentage = totalExercises > 0 ? Math.round(sumOfIndividualExerciseProgress / totalExercises) : (dailyLog?.completion_percentage || 0); // Fallback for safety
-    
-    // Update dailyLog state directly with the new percentage if it has changed
-    setDailyLog(prevLog => {
-        if (!prevLog || prevLog.completion_percentage === newPercentage) return prevLog; // No change needed
-        return {...prevLog, completion_percentage: newPercentage };
-    });
-    return newPercentage;
-  }, [dailyLog?.completion_percentage]); // Dependency on dailyLog's completion_percentage to avoid stale closures
-
-  const handleExerciseUpdate = (exerciseIndex: number, updatedExerciseData: Partial<LoggedExercise>) => {
-    if (!dailyLog) return;
-
-    // Create a new array with the updated exercise
-    const updatedExercises = dailyLog.logged_exercises.map((ex, idx) =>
-        idx === exerciseIndex ? { ...ex, ...updatedExerciseData } : ex
-    );
-    const exerciseToUpdate = updatedExercises[exerciseIndex]; // Get the fully merged exercise
-
-    // Update completed_status for the modified exercise
-    let targetSetsNum = 1;
-    try { targetSetsNum = parseInt(exerciseToUpdate.target_sets.split('-')[0], 10) || 1; }
-    catch { targetSetsNum = 1; }
-
-    if (exerciseToUpdate.actual_sets_completed >= targetSetsNum) {
-        exerciseToUpdate.completed_status = 'full';
-    } else if (exerciseToUpdate.actual_sets_completed > 0) {
-        exerciseToUpdate.completed_status = 'partial';
-    } else {
-        exerciseToUpdate.completed_status = 'pending';
-    }
-    
-    // Update the dailyLog state with the modified exercises array
-    // and then trigger overall completion calculation
-    setDailyLog(prevLog => {
-        if (!prevLog) return null;
-        const newLogState = { ...prevLog, logged_exercises: updatedExercises };
-        // Recalculate overall completion based on the new exercises array
-        const newOverallCompletion = calculateAndUpdateOverallCompletion(newLogState.logged_exercises);
-        return { ...newLogState, completion_percentage: newOverallCompletion };
+      }
+      
+      const newOverallCompletion = calculateOverallCompletion(updatedExercises);
+      return { ...prevLog, logged_exercises: updatedExercises, completion_percentage: newOverallCompletion };
     });
   };
 
@@ -157,67 +133,98 @@ const TodaysWorkout: React.FC = () => {
     const newSetsCompleted = Math.min(ex.actual_sets_completed + 1, maxSets);
     const newRepsPerSet = [...ex.actual_reps_per_set];
     if (newRepsPerSet.length < newSetsCompleted && newSetsCompleted <= maxSets) {
-        newRepsPerSet.push(ex.target_reps_or_duration); // Add placeholder for reps
+        newRepsPerSet.push(ex.target_reps_or_duration);
     }
-    handleExerciseUpdate(exerciseIndex, { actual_sets_completed: newSetsCompleted, actual_reps_per_set: newRepsPerSet });
+    handleExerciseUpdate(exerciseIndex, { 
+        actual_sets_completed: newSetsCompleted, 
+        actual_reps_per_set: newRepsPerSet,
+        current_reps_in_ai_set: 0 // Reset AI reps if manually changing sets
+    });
   };
 
   const decrementSet = (exerciseIndex: number) => {
     if (!dailyLog) return; const ex = dailyLog.logged_exercises[exerciseIndex];
     const newSetsCompleted = Math.max(0, ex.actual_sets_completed - 1);
     const newRepsPerSet = ex.actual_reps_per_set.slice(0, newSetsCompleted);
-    handleExerciseUpdate(exerciseIndex, { actual_sets_completed: newSetsCompleted, actual_reps_per_set: newRepsPerSet });
+    handleExerciseUpdate(exerciseIndex, { 
+        actual_sets_completed: newSetsCompleted, 
+        actual_reps_per_set: newRepsPerSet,
+        current_reps_in_ai_set: 0
+    });
   };
 
   const handleSaveProgress = async () => {
     if (!dailyLog) { setError("No workout data to save."); return; }
     setIsSaving(true); setError('');
     try {
-      // Ensure completion percentage is up-to-date based on current exercise states
-      const finalCompletionPercentage = calculateAndUpdateOverallCompletion(dailyLog.logged_exercises);
-
+      const finalCompletionPercentage = calculateOverallCompletion(dailyLog.logged_exercises);
       const dataToSave = {
-        logged_exercises: dailyLog.logged_exercises.map(({ isSupervisionUIToggled, ...rest }) => rest), // Strip UI state
+        logged_exercises: dailyLog.logged_exercises.map(({ isSupervisionUIToggled, landmarkerLoadFailed, current_reps_in_ai_set, ...rest }) => rest),
         completion_percentage: finalCompletionPercentage,
         session_notes: dailyLog.session_notes || "",
       };
       const response = await updateDailyLogApi(dailyLog.id, dataToSave);
-      // Update dailyLog with the response from the server to ensure consistency,
-      // re-adding the UI toggle state.
       let savedLogFromServer = response.data as DailyLogData;
       savedLogFromServer.logged_exercises = savedLogFromServer.logged_exercises.map(ex => ({
           ...ex,
           isSupervisionUIToggled: dailyLog.logged_exercises.find(lex => lex.original_exercise_id === ex.original_exercise_id)?.isSupervisionUIToggled || false,
+          landmarkerLoadFailed: dailyLog.logged_exercises.find(lex => lex.original_exercise_id === ex.original_exercise_id)?.landmarkerLoadFailed || false,
+          current_reps_in_ai_set: 0,
       }));
       setDailyLog(savedLogFromServer);
       alert("Progress saved successfully!");
-    } catch (err: any) {
-      console.error("Save error:", err.response?.data || err.message);
-      setError(err.response?.data?.detail || "Failed to save progress.");
-    } finally {
-      setIsSaving(false);
-    }
+    } catch (err: any) { console.error("Save error:", err.response?.data || err.message); setError(err.response?.data?.detail || "Failed to save progress."); }
+    finally { setIsSaving(false); }
   };
 
   const handleAiRepCounted = (exerciseIndex: number, repCount: number) => {
-    // This updates the UI display in real-time
-    handleExerciseUpdate(exerciseIndex, { current_reps_in_ai_set: repCount }, false);
+    // This updates the UI display in real-time using a functional update
+    setDailyLog(prevLog => {
+        if (!prevLog) return null;
+        const updatedExercises = prevLog.logged_exercises.map((ex, idx) => 
+            idx === exerciseIndex ? { ...ex, current_reps_in_ai_set: repCount } : ex
+        );
+        return { ...prevLog, logged_exercises: updatedExercises };
+    });
   };
 
   const handleAiSetCompleted = (exerciseIndex: number) => {
-    if (!dailyLog) return;
     console.log(`[Parent] AI Set Completed for index ${exerciseIndex}`);
-    const ex = dailyLog.logged_exercises[exerciseIndex];
-    const maxSets = parseInt(ex.target_sets.split('-').pop() || ex.target_sets, 10) || 1;
-    const newSetsCompleted = Math.min(ex.actual_sets_completed + 1, maxSets);
-    const newRepsPerSet = [...ex.actual_reps_per_set];
-    const repsForThisSet = ex.current_reps_in_ai_set || 0;
-    while (newRepsPerSet.length < newSetsCompleted) newRepsPerSet.push("-");
-    newRepsPerSet[newSetsCompleted - 1] = repsForThisSet;
-    handleExerciseUpdate(exerciseIndex, {
-      actual_sets_completed: newSetsCompleted,
-      actual_reps_per_set: newRepsPerSet,
-      current_reps_in_ai_set: 0,
+    // Use a functional update to ensure we have the latest state
+    setDailyLog(prevLog => {
+        if (!prevLog) return null;
+        const ex = prevLog.logged_exercises[exerciseIndex];
+        if (!ex) return prevLog;
+
+        const targetSetsParts = ex.target_sets.split('-').map(s => parseInt(s.trim(), 10));
+        const maxTargetSets = targetSetsParts.length > 0 ? Math.max(...targetSetsParts.filter(n => !isNaN(n))) : 1;
+        const newSetsCompleted = Math.min(ex.actual_sets_completed + 1, maxTargetSets);
+        
+        const newRepsPerSet = [...ex.actual_reps_per_set];
+        const repsForThisSetByAI = ex.current_reps_in_ai_set || 0;
+        
+        while (newRepsPerSet.length < newSetsCompleted) { newRepsPerSet.push("-"); }
+        newRepsPerSet[newSetsCompleted - 1] = repsForThisSetByAI;
+
+        const updatedExercise = {
+            ...ex,
+            actual_sets_completed: newSetsCompleted,
+            actual_reps_per_set: newRepsPerSet,
+            current_reps_in_ai_set: 0, // Reset for the next set
+        };
+        
+        // Determine status based on the new data
+        if (maxTargetSets > 0 && updatedExercise.actual_sets_completed >= maxTargetSets) {
+            updatedExercise.completed_status = 'full';
+        } else if (updatedExercise.actual_sets_completed > 0) {
+            updatedExercise.completed_status = 'partial';
+        } else {
+            updatedExercise.completed_status = 'pending';
+        }
+        
+        const finalExercises = prevLog.logged_exercises.map((e, idx) => idx === exerciseIndex ? updatedExercise : e);
+        const newOverallCompletion = calculateOverallCompletion(finalExercises);
+        return { ...prevLog, logged_exercises: finalExercises, completion_percentage: newOverallCompletion };
     });
   };
 
@@ -231,6 +238,7 @@ const TodaysWorkout: React.FC = () => {
     exerciseClickableHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', cursor: 'pointer' },
     exerciseName: { fontSize: '1.1em', fontWeight: 'bold', color: '#333' },
     targetInfo: { fontSize: '0.9em', color: '#666', marginBottom: '10px' },
+    aiRepDisplay: {display: 'block', color: 'purple', fontStyle: 'italic', fontSize: '0.9em', marginTop: '5px'},
     progressControls: { display: 'flex', alignItems: 'center', marginTop: '10px', gap: '10px', marginBottom: '10px' },
     setButton: { padding: '5px 10px', border: '1px solid #ccc', borderRadius: '4px', cursor: 'pointer', minWidth: '30px', textAlign: 'center', backgroundColor: '#f0f0f0'},
     actualSetsDisplay: { fontWeight: 'bold', fontSize: '1.1em', margin: '0 5px' },
@@ -238,63 +246,61 @@ const TodaysWorkout: React.FC = () => {
     supervisionSection: { marginTop: '15px', paddingTop: '15px', borderTop: '1px dashed #ccc' },
     toggleContainer: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' },
     toggleLabel: { marginRight: '10px', color: '#333' },
-    toggleSwitchBase: { width: '80px', height: '30px', borderRadius: '15px', padding: '2px 5px', cursor: 'pointer', border: '1px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9em', fontWeight: 'bold', transition: 'background-color 0.2s ease, color 0.2s ease', outline: 'none' },
+    toggleSwitchBase: { minWidth: '80px', height: '30px', borderRadius: '15px', padding: '2px 5px', cursor: 'pointer', border: '1px solid #ccc', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9em', fontWeight: 'bold', transition: 'background-color 0.2s ease, color 0.2s ease', outline: 'none' },
     toggleSwitchActive: { backgroundColor: '#4CAF50', color: 'white', borderColor: '#388E3C' },
     toggleSwitchInactive: { backgroundColor: '#ccc', color: '#333', borderColor: '#bbb' },
+    toggleSwitchError: {backgroundColor: '#dc3545', color: 'white', cursor: 'not-allowed'},
     loadingErrorContainer: { textAlign: 'center', marginTop: '50px', fontSize: '18px' } as React.CSSProperties,
     saveButton: { display: 'block', width: '100%', padding: '12px', fontSize: '18px', fontWeight: 'bold', backgroundColor: '#28a745', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer', marginTop: '30px' },
   };
 
   const toggleExpandExercise = (index: number) => {
-    console.log("[ToggleExpand] Index:", index, "Current expanded:", expandedExerciseIndex);
     const previouslyExpandedIndex = expandedExerciseIndex;
-
     if (previouslyExpandedIndex === index) {
       if (dailyLog?.logged_exercises[index]?.isSupervisionUIToggled) {
-        console.log("[ToggleExpand] Collapsing AND supervision UI was ON. Turning UI toggle OFF for index:", index);
-        handleSupervisionUIToggle(index); // Turn off UI toggle before collapsing
+        handleSupervisionUIToggle(index);
       }
       setExpandedExerciseIndex(null);
     } else {
       if (previouslyExpandedIndex !== null && dailyLog?.logged_exercises[previouslyExpandedIndex]?.isSupervisionUIToggled) {
-        console.log("[ToggleExpand] Different exercise's supervision UI was ON. Turning UI toggle OFF for old index:", previouslyExpandedIndex);
         handleSupervisionUIToggle(previouslyExpandedIndex);
       }
       setExpandedExerciseIndex(index);
     }
   };
 
-  // Handler for the Supervision UI Toggle button
   const handleSupervisionUIToggle = (exerciseIndex: number) => {
     if (!dailyLog) return;
-    console.log(`[UIToggle] Clicked for index ${exerciseIndex}. Current toggle state: ${dailyLog.logged_exercises[exerciseIndex]?.isSupervisionUIToggled}`);
     setDailyLog(prev => {
         if (!prev) return null;
         const newExercises = prev.logged_exercises.map((ex, idx) =>
-            idx === exerciseIndex ? { ...ex, isSupervisionUIToggled: !ex.isSupervisionUIToggled } : ex
+            idx === exerciseIndex ? { 
+                ...ex, 
+                isSupervisionUIToggled: !ex.isSupervisionUIToggled, 
+                landmarkerLoadFailed: !ex.isSupervisionUIToggled ? false : ex.landmarkerLoadFailed,
+                current_reps_in_ai_set: 0,
+            } : ex
         );
         return { ...prev, logged_exercises: newExercises };
     });
   };
 
-
   if (isLoading) return <div style={styles.loadingErrorContainer}><p>Loading Today's Workout...</p></div>;
   if (error && !dailyLog) return <div style={styles.loadingErrorContainer}><p style={{ color: 'red' }}>Error: {error}</p></div>;
-  if (!dailyLog) return <div style={styles.loadingErrorContainer}><p>Could not load workout data. Please check your plan or login.</p></div>;
+  if (!dailyLog) return <div style={styles.loadingErrorContainer}><p>Could not load workout data.</p></div>;
 
-  const isRestDayDisplay = dailyLog.logged_exercises.length === 0 && dailyLog.completion_percentage === 100;
+  const isRestDayDisplay = dailyLog.logged_exercises.length === 0;
 
   return (
      <div style={styles.pageContainer}>
       <h1 style={styles.mainTitle}>Today's Workout</h1>
-      {error && <p style={{color: 'red', textAlign: 'center'}}>{error}</p>}
+      {error && !isSaving && <p style={{color: 'red', textAlign: 'center'}}>{error}</p>}
       <h2 style={styles.routineNameTitle}>Routine: {dailyLog.routine_log_name || 'N/A'}</h2>
       <p style={{textAlign: 'center', fontSize: '1.2em', marginBottom: '20px'}}>
         Overall Progress: <strong>{dailyLog.completion_percentage}%</strong>
       </p>
-      <h3 style={styles.sectionTitle}>
-        {isRestDayDisplay ? "Today is a Scheduled Rest Day!" : "Exercises for Today:"}
-      </h3>
+      <h3 style={styles.sectionTitle}>{isRestDayDisplay ? "Today is a Scheduled Rest Day!" : "Exercises for Today:"}</h3>
+
       {isRestDayDisplay ? (
          <div style={{textAlign: 'center', padding: '20px', backgroundColor: '#e6ffed', border: '1px solid #c3e6cb', borderRadius: '5px'}}>
             <p style={{fontSize: '1.1em', color: '#155724'}}>Enjoy your rest! You've earned it. ✅</p>
@@ -302,7 +308,7 @@ const TodaysWorkout: React.FC = () => {
       ) : (
         <ul style={styles.workoutList}>
           {dailyLog.logged_exercises.map((item, index) => (
-            <li key={item.original_exercise_id || `exercise-${index}-${Math.random()}`} style={styles.workoutItem}>
+            <li key={item.original_exercise_id || `exercise-${index}`} style={styles.workoutItem}>
               <div style={styles.exerciseClickableHeader} onClick={() => toggleExpandExercise(index)}>
                 <span style={styles.exerciseName}>{item.exercise_name}</span>
                 <span style={styles.statusIcon}>
@@ -311,6 +317,11 @@ const TodaysWorkout: React.FC = () => {
               </div>
               <div style={styles.targetInfo}>
                 Target: {item.target_sets} sets of {item.target_reps_or_duration}
+                {item.isSupervisionUIToggled && (
+                    <span style={styles.aiRepDisplay}>
+                        AI Reps (current set): {item.current_reps_in_ai_set || 0}
+                    </span>
+                )}
                 {item.notes_from_routine && <em style={{display: 'block', fontSize: '0.9em', color: '#777'}}>Routine Notes: {item.notes_from_routine}</em>}
               </div>
               <div style={styles.progressControls}>
@@ -319,6 +330,11 @@ const TodaysWorkout: React.FC = () => {
                 <span style={styles.actualSetsDisplay}>{item.actual_sets_completed}</span>
                 <button style={styles.setButton} onClick={() => incrementSet(index)} disabled={isSaving || item.isSupervisionUIToggled}>+</button>
               </div>
+              {item.actual_reps_per_set.length > 0 && (
+                  <div style={{marginTop: '5px', fontSize: '0.9em'}}>
+                      Reps per set: {item.actual_reps_per_set.join(' | ')}
+                  </div>
+              )}
 
               {expandedExerciseIndex === index && (
                 <div style={styles.supervisionSection}>
@@ -326,25 +342,21 @@ const TodaysWorkout: React.FC = () => {
                     <span style={styles.toggleLabel}>AI Supervision:</span>
                     <button
                       onClick={() => handleSupervisionUIToggle(index)}
-                      style={{
-                        ...styles.toggleSwitchBase,
-                        ...(item?.isSupervisionUIToggled ? styles.toggleSwitchActive : styles.toggleSwitchInactive),
-                      }}
-                      aria-pressed={!!item?.isSupervisionUIToggled}
+                      style={{ ...styles.toggleSwitchBase, ...(item.isSupervisionUIToggled ? styles.toggleSwitchActive : styles.toggleSwitchInactive) }}
+                      aria-pressed={!!item.isSupervisionUIToggled}
                       type="button"
                     >
-                      {item?.isSupervisionUIToggled ? 'ON' : 'OFF'}
+                      {item.isSupervisionUIToggled ? 'ON' : 'OFF'}
                     </button>
                   </div>
-
-                  {item?.isSupervisionUIToggled && dailyLog && (
+                  {item.isSupervisionUIToggled && (
                     <PoseDetector
                       key={`supervision-${item.original_exercise_id}`}
                       exercise={{
                         exercise_name: item.exercise_name,
                         target_reps_or_duration: item.target_reps_or_duration,
                       }}
-                      isActive={item.isSupervisionUIToggled} // The crucial prop
+                      isActive={item.isSupervisionUIToggled}
                       onRepCounted={(count) => handleAiRepCounted(index, count)}
                       onSetCompleted={() => handleAiSetCompleted(index)}
                     />
