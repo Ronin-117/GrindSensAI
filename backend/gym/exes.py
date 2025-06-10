@@ -1,7 +1,7 @@
 #exes.py
 
 import mediapipe as mp
-from util import calculate_angle
+from gym.util import calculate_angle
 
 
 mp_pose = mp.solutions.pose

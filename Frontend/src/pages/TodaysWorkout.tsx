@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOrCreateDailyLogApi, updateDailyLogApi } from './api'; // Ensure correct path
-import ExerciseSupervision from './ExerciseSupervision'; // Import the new component
+import PoseDetector from './PoseDetector';
 
 // Interfaces for the data structures
 interface LoggedExercise {
@@ -65,7 +65,7 @@ const TodaysWorkout: React.FC = () => {
       console.error("[FetchLog] Error:", err.response?.data || err.message);
       if (err.response && err.response.status === 401) {
         setError('Session expired. Redirecting to login...');
-        setTimeout(() => navigate('/login'), 3000);
+        setTimeout(() => navigate('/'), 3000);
       } else {
         setError(err.response?.data?.error || err.message || "Could not load today's workout.");
       }
@@ -199,6 +199,28 @@ const TodaysWorkout: React.FC = () => {
     }
   };
 
+  const handleAiRepCounted = (exerciseIndex: number, repCount: number) => {
+    // This updates the UI display in real-time
+    handleExerciseUpdate(exerciseIndex, { current_reps_in_ai_set: repCount }, false);
+  };
+
+  const handleAiSetCompleted = (exerciseIndex: number) => {
+    if (!dailyLog) return;
+    console.log(`[Parent] AI Set Completed for index ${exerciseIndex}`);
+    const ex = dailyLog.logged_exercises[exerciseIndex];
+    const maxSets = parseInt(ex.target_sets.split('-').pop() || ex.target_sets, 10) || 1;
+    const newSetsCompleted = Math.min(ex.actual_sets_completed + 1, maxSets);
+    const newRepsPerSet = [...ex.actual_reps_per_set];
+    const repsForThisSet = ex.current_reps_in_ai_set || 0;
+    while (newRepsPerSet.length < newSetsCompleted) newRepsPerSet.push("-");
+    newRepsPerSet[newSetsCompleted - 1] = repsForThisSet;
+    handleExerciseUpdate(exerciseIndex, {
+      actual_sets_completed: newSetsCompleted,
+      actual_reps_per_set: newRepsPerSet,
+      current_reps_in_ai_set: 0,
+    });
+  };
+
   const styles: { [key: string]: React.CSSProperties } = {
     pageContainer: { padding: '20px', fontFamily: 'sans-serif', maxWidth: '700px', margin: '0 auto' ,marginRight : "auto"},
     mainTitle: { fontSize: '24px', fontWeight: 'bold', marginBottom: '10px', textAlign: 'center' },
@@ -316,24 +338,15 @@ const TodaysWorkout: React.FC = () => {
                   </div>
 
                   {item?.isSupervisionUIToggled && dailyLog && (
-                    <ExerciseSupervision
+                    <PoseDetector
+                      key={`supervision-${item.original_exercise_id}`}
                       exercise={{
-                        original_exercise_id: item.original_exercise_id,
                         exercise_name: item.exercise_name,
+                        target_reps_or_duration: item.target_reps_or_duration,
                       }}
-                      isActive={true} // Supervision component is active because its UI toggle is ON
-                      onSupervisionError={(supervisionErr) => {
-                        console.error(`Error from supervision for ${item.exercise_name}:`, supervisionErr);
-                        setError(`AI Supervision error for ${item.exercise_name}. Please try toggling again.`);
-                        // Automatically turn off the UI toggle for this item on error
-                        setDailyLog(prev => {
-                            if (!prev) return null;
-                            const newExercises = prev.logged_exercises.map((ex, i) =>
-                                i === index ? { ...ex, isSupervisionUIToggled: false } : ex
-                            );
-                            return {...prev, logged_exercises: newExercises};
-                        });
-                      }}
+                      isActive={item.isSupervisionUIToggled} // The crucial prop
+                      onRepCounted={(count) => handleAiRepCounted(index, count)}
+                      onSetCompleted={() => handleAiSetCompleted(index)}
                     />
                   )}
                 </div>
