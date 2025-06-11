@@ -1,44 +1,52 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import "./Navbar.css";
 
 function Navbar() {
-
   const navigate = useNavigate();
-  // Check login status on every render to ensure it's up-to-date
   const isLoggedIn = !!sessionStorage.getItem('accessToken');
 
   const handleLogout = () => {
     sessionStorage.removeItem('accessToken');
     sessionStorage.removeItem('refreshToken');
-    // Navigate to login after logout. Using replace: true prevents the user from
-    // clicking the back button to get to the logged-in page again.
     navigate('/login', { replace: true });
   };
 
-  
   return (
-    <nav>
-      <ul>
+    <nav className="navbar-container">
+      <ul className="navbar-list">
         <li>
-          <Link to="/"><button>Login</button></Link>
+          <NavLink to="/dashboard" className="nav-item">
+            <i className="fas fa-chalkboard"></i>
+            <span className="nav-text">Dashboard</span>
+          </NavLink>
         </li>
         <li>
-          <Link to="/dashboard"><button>Dashboard</button></Link>
+          <NavLink to="/profile" className="nav-item">
+            <i className="fas fa-user"></i>
+            <span className="nav-text">User Progress</span>
+          </NavLink>
         </li>
         <li>
-          <Link to="/profile"><button>User Progress/Profile</button></Link>
+          <NavLink to="/evaluate-workout" className="nav-item">
+            <i className="fas fa-dumbbell"></i>
+            <span className="nav-text">Workout Routines</span>
+          </NavLink>
         </li>
         <li>
-          <Link to="/evaluate-workout"><button>Workout Routines</button></Link>
+          <NavLink to="/todays-workout" className="nav-item">
+            <i className="fas fa-calendar-day"></i>
+            <span className="nav-text">Today's Workout</span>
+          </NavLink>
         </li>
-        <li>
-          <Link to="/todays-workout"><button>Today's Workout</button></Link>
-        </li>
-        {/* Add a logout button if logged in */}
+
         {isLoggedIn && (
-            <li>
-                <button onClick={handleLogout}>Logout</button>
-            </li>
+          <li>
+            {/* The logout button shares the .nav-item style but has its own special hover */}
+            <button onClick={handleLogout} className="nav-item logout-btn">
+              <i className="fas fa-sign-out-alt"></i>
+              <span className="nav-text">Logout</span>
+            </button>
+          </li>
         )}
       </ul>
     </nav>

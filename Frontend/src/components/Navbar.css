@@ -1,32 +1,112 @@
-.navbar {
-  display: flex;
-  flex-direction: column; /* Stack items vertically */
-  justify-content: center; /* Center items vertically */
-  align-items: center; /* Center items horizontally */
-  position: fixed; /* Fixed position */
+/* Main container for the navigation bar */
+.navbar-container {
+  position: fixed;
   top: 0;
-  right: 0; /* Align to the left */
-  width: 200px; /* Fixed width */
-  height: 100%; /* Full height */
-  background-color: #f0f0f0; /* Optional background color */
-  padding: 20px;
+  right: 0;
+  height: 100vh;
+  width: var(--navbar-width-collapsed); /* Starts collapsed */
+  background: transparent; /* As requested */
+  padding: var(--spacing-xl) 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 1000;
+  transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transition for width */
+  margin-right: 3%;
+  padding-top: 10%;
+  padding-bottom: 10%;
 }
 
+/* On hover, the container expands */
+.navbar-container:hover {
+  width: var(--navbar-width-expanded);
+}
+
+
+/* --- MODIFIED SECTION 1 --- */
 .navbar-list {
   list-style: none;
   padding: 0;
   margin: 0;
-  width: 100%; /* Make the list take up the full width of the navbar */
+  width: 100%;
+  
+  /* ADDED: Make the list a flex container itself */
+  display: flex;
+  flex-direction: column;
+
+  /* ADDED: This is the key to spacing items out evenly */
+  justify-content: space-evenly; 
+  
+  /* ADDED: This makes the list grow to fill the entire navbar height */
+  flex-grow: 1; 
 }
 
-.navbar-list li {
-  text-align: center; /* Center the text within each list item */
-  margin-bottom: 10px; /* Add some spacing between items */
+
+/* --- MODIFIED SECTION 2 --- */
+/* This is the class for both <NavLink> and the logout <button> */
+.nav-item {
+  display: flex;
+  align-items: center;
+  height: 55px;
+  width: 90%; /* A bit of margin on the sides */
+
+  /* CHANGED: Removed the vertical margin so the parent can control spacing */
+  margin: 0 auto; 
+  
+  padding: 0 var(--spacing-medium);
+  box-sizing: border-box;
+  background: var(--color-background-card);
+  color: var(--color-text-muted);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-medium);
+  text-decoration: none; /* For NavLink */
+  font-family: var(--font-family-sans); /* For button */
+  font-size: var(--font-size-base); /* For button */
+  overflow: hidden; /* CRITICAL: Hides the text when collapsed */
+  white-space: nowrap; /* Prevents text from wrapping */
+  cursor: pointer;
+  transition: all 0.3s ease;
 }
 
-.navbar-list li a {
-  display: block; /* Make the links fill the full width of the list item */
-  padding: 10px; /* Add some padding around the links */
-  text-decoration: none; /* Remove underlines */
-  color: #333; /* Set the text color */
+.nav-item:hover {
+  background: var(--color-background-input-focus);
+  color: var(--color-text);
+  transform: scale(1.02); /* Slight zoom on hover */
+}
+
+/* Active link styling */
+.nav-item.active {
+  background: var(--color-primary);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Special styling for the logout button hover */
+.nav-item.logout-btn:hover {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+}
+
+
+/* Icon styling */
+.nav-item .fas { /* Target Font Awesome icons */
+  font-size: 20px;
+  min-width: 50px; /* Gives the icon a fixed space */
+  text-align: center;
+  transition: color 0.3s ease;
+}
+
+/* Text that appears on hover */
+.nav-text {
+  opacity: 0; /* Hidden by default */
+  transform: translateX(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* When the navbar container is hovered, fade in the text */
+.navbar-container:hover .nav-text {
+  opacity: 1;
+  transform: translateX(0);
+  transition-delay: 0.1s; /* Slight delay for a polished feel */
 }

@@ -39,6 +39,11 @@
   --spacing-large: 15px;
   --spacing-xl: 24px;
   --spacing-xxl: 40px;
+
+  /* NAVBAR */
+  --navbar-width-collapsed: 80px;
+  --navbar-width-expanded: 240px;
+
 }
 
 /* Base body styles using the variables */
@@ -54,3 +59,4 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+

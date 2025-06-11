@@ -1,11 +1,10 @@
 .app-container {
   display: flex;
   min-height: 100vh;
-  margin-right: 15%;
+  margin-right: 16%;
 }
 
 .content {
   flex: 1; /* Take up remaining space */
-  margin-left: 200px; /* Same as navbar width */
-  padding: 20px; /* Add some padding for better readability */
+  padding: 1%; /* Add some padding for better readability */
 }
