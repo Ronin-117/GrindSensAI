@@ -1,6 +1,10 @@
 import { Link, Route, BrowserRouter as Router, Routes, useNavigate } from 'react-router-dom';
 import './App.css';
-import Navbar from './components/Navbar';
+
+// Import your new layout component
+import MainLayout from './components/MainLayout';
+
+// Import your page components
 import Dashboard from './pages/Dashboard';
 import EvaluateWorkout from './pages/EvaluateWorkout';
 import Login from './pages/Login';
@@ -9,7 +13,6 @@ import TodaysWorkout from './pages/TodaysWorkout';
 import WorkoutDisplay from './pages/WorkoutDisplay';
 import WorkoutMod from './pages/WorkoutMod';
 import WorkoutResult from './pages/WorkoutResult';
-
 
 // Simple Nav component to use useNavigate for logout
 const Navigation = () => {
@@ -37,12 +40,13 @@ const Navigation = () => {
 function App() {
   return (
     <Router>
-      <div className="app-container"> 
-        
-        <div className="content">
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route path="/login" element={<Login />} />
+      <Routes>
+        {/* Routes that DON'T have the navbar */}
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+
+        {/* Routes that DO have the navbar, nested under MainLayout */}
+        <Route element={<MainLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/evaluate-workout" element={<EvaluateWorkout />} />
           <Route path="/todays-workout" element={<TodaysWorkout />} />
@@ -50,12 +54,13 @@ function App() {
           <Route path="/workout-mod" element={<WorkoutMod />} />
           <Route path="/workout-display" element={<WorkoutDisplay />} />
           <Route path="/workout-result" element={<WorkoutResult />} />
-        </Routes>
-        </div>
-        <div className="navbar">
-          <Navbar />
-        </div>
-      </div>
+          {/* Add any other pages that need the navbar here */}
+        </Route>
+        
+        {/* Optional: Add a 404 Not Found route at the end */}
+        <Route path="*" element={<div><h1>404 - Page Not Found</h1></div>} />
+
+      </Routes>
     </Router>
   );
 }

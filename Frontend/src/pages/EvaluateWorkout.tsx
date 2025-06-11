@@ -114,7 +114,6 @@ const EvaluateWorkout: React.FC = () => {
       fontFamily: 'sans-serif',
       maxWidth: '800px', // Added max-width for better layout
       margin: '0 auto',
-      marginRight : "500px", // Center the container
     },
     header: {
       display: 'flex',

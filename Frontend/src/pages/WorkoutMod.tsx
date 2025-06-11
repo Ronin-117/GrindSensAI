@@ -265,7 +265,7 @@ const WorkoutMod: React.FC = () => {
 
   // --- Original Styles from template, adapt as needed ---
   const styles: { [key: string]: React.CSSProperties } = {
-    pageContainer: { padding: '20px', fontFamily: 'sans-serif', maxWidth: '700px', margin: '0 auto',marginRight:"500px" },
+    pageContainer: { padding: '20px', fontFamily: 'sans-serif', maxWidth: '700px', margin: '0 auto' },
     title: { fontSize: '24px', fontWeight: 'bold', marginBottom: '25px', textAlign: 'center' },
     promptSection: { display: 'flex', alignItems: 'center', marginBottom: '25px' },
     promptLabel: { marginRight: '10px', fontSize: '16px', whiteSpace: 'nowrap' },

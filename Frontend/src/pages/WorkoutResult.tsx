@@ -27,7 +27,6 @@ const WorkoutResult = () => {
       fontFamily: 'sans-serif',
       maxWidth: '500px',
       margin: '0 auto',
-      marginRight : "500px"
     },
     mainTitle: {
       fontSize: '24px',
