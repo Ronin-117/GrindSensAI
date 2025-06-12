@@ -24,6 +24,7 @@
   padding: var(--spacing-xxl);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  /* background: var(--color-background-card); */
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
