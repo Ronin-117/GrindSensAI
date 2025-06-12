@@ -44,6 +44,12 @@
   --navbar-width-collapsed: 80px;
   --navbar-width-expanded: 240px;
 
+  /* DASHBOARD */
+  --color-status-success: #39d353; /* Bright green for full workout */
+  --color-status-partial: #58a6ff; /* Bright blue for partial */
+  --color-status-error: #f85149;   /* Bright red for no workout */
+
+
 }
 
 /* Base body styles using the variables */

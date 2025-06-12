@@ -56,7 +56,7 @@ function Login() {
       sessionStorage.setItem('accessToken', access);
       sessionStorage.setItem('refreshToken', refresh);
       setSuccessMessage('Login successful! Redirecting...');
-      setTimeout(() => navigate('/profile'), 1500);
+      setTimeout(() => navigate('/dashboard'), 1500);
 
     } catch (err: any) {
       console.error('Login error:', err.response ? err.response.data : err.message);
@@ -110,7 +110,7 @@ function Login() {
       } else {
         setSuccessMessage('Signup complete! Redirecting...');
       }
-      setTimeout(() => navigate('/profile'), 1500);
+      setTimeout(() => navigate('/dashboard'), 1500);
 
     } catch (err: any) {
       console.error('Signup process error:', err.response ? err.response.data : err.message);
