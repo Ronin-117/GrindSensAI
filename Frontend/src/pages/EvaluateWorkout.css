@@ -1,0 +1,194 @@
+/* Main container with background */
+.evaluate-page-container {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background-image: url('/eval_workout.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--color-text);
+  
+  display: flex;
+  justify-content: center;
+  align-items: flex-start; /* Align to top to see list start */
+  padding: 60px calc(var(--navbar-width-collapsed) + 2vw) 60px 2vw;
+  overflow-y: auto; /* Allow page to scroll if list is long */
+}
+
+/* The main content card */
+.routines-content-card {
+  width: 100%;
+  max-width: 900px;
+  background: var(--color-background-card);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-large);
+  padding: var(--spacing-xxl);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.routines-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xl);
+  padding-bottom: var(--spacing-xl);
+  border-bottom: 1px solid var(--border-color-light);
+}
+
+.routines-header h1 {
+  font-size: 2.2rem;
+  margin: 0;
+}
+
+.create-routine-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small);
+  padding: var(--spacing-medium) var(--spacing-large);
+  background-color: var(--color-primary);
+  color: var(--color-text);
+  border: none;
+  border-radius: var(--border-radius-medium);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.create-routine-btn:hover {
+  background-color: var(--color-primary-dark);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+}
+
+/* Container for the list of routines */
+.routine-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-large);
+}
+
+/* Individual routine card */
+.routine-item {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-large);
+  background-color: rgba(255, 255, 255, 0.03);
+  padding: var(--spacing-large);
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-medium);
+  transition: all 0.3s ease;
+}
+.routine-item:hover {
+  border-color: var(--color-text-muted);
+  transform: translateY(-3px);
+}
+
+.routine-item.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 15px rgba(0, 123, 255, 0.5);
+  background-color: var(--color-background-input-focus);
+}
+
+.routine-info {
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.routine-name {
+  font-size: 1.25rem;
+  font-weight: var(--font-weight-bold);
+  margin: 0;
+}
+
+.preset-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: var(--color-text-muted);
+  color: var(--color-background-card);
+  padding: 2px 6px;
+  border-radius: var(--border-radius-small);
+  margin-top: var(--spacing-small);
+}
+
+.routine-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-medium);
+  flex-shrink: 0; /* Prevent buttons from wrapping */
+}
+
+/* Base style for action buttons */
+.action-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small);
+  padding: var(--spacing-small) var(--spacing-medium);
+  font-size: 0.9rem;
+  border-radius: var(--border-radius-small);
+  border: 1px solid var(--border-color);
+  background-color: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.action-btn:hover {
+  background-color: var(--color-background-toggle);
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+.action-btn.btn-select {
+  border-color: var(--color-status-success);
+  color: var(--color-status-success);
+}
+.action-btn.btn-select:hover {
+  background-color: var(--color-success-bg);
+  color: var(--color-text);
+  border-color: var(--color-status-success);
+}
+.action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.selected-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-small);
+  padding: var(--spacing-small) var(--spacing-medium);
+  font-size: 0.9rem;
+  color: var(--color-status-success);
+  background-color: var(--color-success-bg);
+  border-radius: var(--border-radius-small);
+  border: 1px solid var(--color-status-success);
+}
+
+/* The final "Add New" card */
+.add-new-routine-card {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xl);
+  border: 2px dashed var(--border-color);
+  border-radius: var(--border-radius-medium);
+  color: var(--color-text-muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.add-new-routine-card:hover {
+  background-color: var(--color-background-toggle);
+  color: var(--color-text);
+  border-color: var(--color-text);
+}
+
+/* Feedback messages */
+.feedback-message-container {
+  padding: 0 var(--spacing-xl);
+  margin-bottom: var(--spacing-large);
+}
