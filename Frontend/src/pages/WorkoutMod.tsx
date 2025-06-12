@@ -1,19 +1,11 @@
-// src/pages/WorkoutMod.tsx
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import {
-  createNewRoutineApi,
-  generateWorkoutWithAIApi,
-  getSpecificRoutineApi,
-  updateRoutineApi,
-} from './api'; // Adjust path
+import { createNewRoutineApi, generateWorkoutWithAIApi, getSpecificRoutineApi, updateRoutineApi } from './api';
+import './WorkoutMod.css'; // Import the new stylesheet
 
-// Interfaces from WorkoutDisplay.tsx can be reused or defined here
-// For simplicity, let's assume FullTrainingRoutineData is available or defined similarly
-// Make sure it aligns with what GeminiTrainingRoutine Pydantic model will produce
-// and what your Django TrainingRoutineSerializer expects for saving.
+// Interfaces remain the same
 interface ExerciseData {
-  id?: number; // Optional for new exercises from AI
+  id?: number;
   exercise_name: string;
   target_muscles: string[];
   sets: string;
@@ -21,18 +13,15 @@ interface ExerciseData {
   rest_period: string;
   notes?: string | null;
 }
-
 interface WeeklyScheduleItemData {
-  id?: number; // Optional for new items from AI
+  id?: number;
   day_of_week_or_number: string;
   session_focus: string;
   exercises: ExerciseData[];
 }
-
 interface TrainingRoutineFormData {
-  // Fields directly editable by user or populated by AI
-  id?: number; // DB ID, present if editing
-  routine_id: string; // AI might generate this, or user can set
+  id?: number;
+  routine_id: string;
   routine_name: string;
   goal: string;
   experience_level: string;
@@ -43,22 +32,20 @@ interface TrainingRoutineFormData {
   cardio_guidelines?: string | null;
   flexibility_guidelines?: string | null;
   precautions?: string | null;
-  coach_response?: string | null; // This will come from AI
-  is_preset?: boolean; // Should always be false when user saves
+  coach_response?: string | null;
+  is_preset?: boolean;
   user?: number | null;
 }
 
 const initialRoutineState: TrainingRoutineFormData = {
-  routine_id: `ROUTINE_${Date.now()}`, // Default unique-ish ID
+  routine_id: `ROUTINE_${Date.now()}`,
   routine_name: '',
   goal: '',
   experience_level: 'Beginner',
   training_split: 'Full Body',
   days_per_week: '3',
   description: '',
-  weekly_schedule: [
-    { day_of_week_or_number: 'Day 1', session_focus: '', exercises: [] },
-  ],
+  weekly_schedule: [],
   cardio_guidelines: '',
   flexibility_guidelines: '',
   precautions: '',
@@ -66,16 +53,11 @@ const initialRoutineState: TrainingRoutineFormData = {
   is_preset: false,
 };
 
-
 const WorkoutMod: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-
-  const mode = location.state?.mode as 'create' | 'edit' | 'view' || 'create';
-  const routineIdToEdit = location.state?.routineId as number | undefined;
-  const isPresetToEdit = location.state?.isPreset as boolean || false;
-
-
+  const { mode = 'create', routineId: routineIdToEdit, isPreset: isPresetToEdit } = location.state || {};
+  
   const [currentRoutine, setCurrentRoutine] = useState<TrainingRoutineFormData>(initialRoutineState);
   const [userPrompt, setUserPrompt] = useState<string>('');
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
@@ -84,8 +66,9 @@ const WorkoutMod: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [pageTitle, setPageTitle] = useState<string>('Create New Workout Routine');
 
-  // Fetch existing routine if in 'edit' mode
+  // All logic (useEffect, handlers) remains the same.
   useEffect(() => {
+    // ... same logic as before
     if ((mode === 'edit' || mode === 'view') && routineIdToEdit) {
       setPageTitle(mode === 'edit' ? 'Edit Workout Routine' : 'View Workout Routine');
       if (isPresetToEdit && mode === 'edit') {
@@ -97,16 +80,14 @@ const WorkoutMod: React.FC = () => {
         .then(response => {
           const fetchedRoutine = response.data as TrainingRoutineFormData;
           if (isPresetToEdit && mode === 'edit') {
-            // For editing a preset, we treat it as creating a new routine FOR THE USER
-            // by copying the preset's data but clearing its DB ID and setting user-specifics.
             setCurrentRoutine({
               ...fetchedRoutine,
-              id: undefined, // This will be a new routine for the user
-              routine_id: `${fetchedRoutine.routine_id}_USER_${Date.now()}`, // Make user's copy unique
+              id: undefined,
+              routine_id: `${fetchedRoutine.routine_id}_USER_${Date.now()}`,
               is_preset: false,
-              user: undefined, // Will be set by backend on save
+              user: undefined,
               routine_name: `${fetchedRoutine.routine_name} (My Version)`,
-              coach_response: "Customized from a preset." // Or let AI generate new based on prompt
+              coach_response: "Customized from a preset."
             });
             setPageTitle(`Customize: ${fetchedRoutine.routine_name}`);
           } else {
@@ -119,23 +100,19 @@ const WorkoutMod: React.FC = () => {
         })
         .finally(() => setIsLoadingExisting(false));
     } else {
-        // Reset to initial state for 'create' mode
         setCurrentRoutine({...initialRoutineState, routine_id: `ROUTINE_${Date.now()}`});
         setPageTitle('Create New Workout Routine');
     }
   }, [mode, routineIdToEdit, isPresetToEdit]);
 
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    // ... same logic as before
     const { name, value } = e.target;
     setCurrentRoutine(prev => ({ ...prev, [name]: value }));
   };
 
-  // Handlers for nested weekly_schedule and exercises (these get complex)
-  // For simplicity, we'll let AI populate/modify these for now.
-  // A full UI for manual editing of nested structures is a big task.
-
   const handlePromptSubmit = async () => {
+    // ... same logic as before
     if (!userPrompt.trim()) {
       setError('Please enter a prompt.');
       return;
@@ -143,26 +120,18 @@ const WorkoutMod: React.FC = () => {
     setIsAiLoading(true);
     setError('');
     try {
-      // If editing, send the current state of 'currentRoutine' as context
       const routineContext = (mode === 'edit' || (mode === 'view' && userPrompt)) ? currentRoutine : null;
       const response = await generateWorkoutWithAIApi(userPrompt, routineContext);
-      // The AI response should be in the shape of TrainingRoutineFormData (or GeminiTrainingRoutine)
       const aiGeneratedRoutine = response.data as TrainingRoutineFormData;
-
-      // Merge AI response with current form, or replace it.
-      // AI might not return all fields, or you might want to keep some user inputs.
-      // For now, let's assume AI returns a complete structure.
-      // If AI returns a routine_id, use it, otherwise keep the existing one or generate.
       setCurrentRoutine({
-        ...initialRoutineState, // Reset to ensure all fields are fresh from AI if needed
+        ...initialRoutineState,
         ...aiGeneratedRoutine,
-        id: mode === 'edit' && !isPresetToEdit ? currentRoutine.id : undefined, // Keep DB ID if truly editing existing user routine
-        routine_id: aiGeneratedRoutine.routine_id || currentRoutine.routine_id || `AI_ROUTINE_${Date.now()}`, // Ensure routine_id exists
-        is_preset: false, // AI generated routines are not presets
+        id: mode === 'edit' && !isPresetToEdit ? currentRoutine.id : undefined,
+        routine_id: aiGeneratedRoutine.routine_id || currentRoutine.routine_id || `AI_ROUTINE_${Date.now()}`,
+        is_preset: false,
       });
-      setUserPrompt(''); // Clear prompt after submission
+      setUserPrompt('');
       setPageTitle(aiGeneratedRoutine.routine_name ? `AI Draft: ${aiGeneratedRoutine.routine_name}` : "AI Generated Routine");
-
     } catch (err: any) {
       console.error("AI generation error:", err);
       setError(err.response?.data?.error || err.response?.data?.detail || err.message || "AI generation failed.");
@@ -172,20 +141,21 @@ const WorkoutMod: React.FC = () => {
   };
 
   const handleSaveWorkout = async () => {
+    // ... same logic as before
     setIsSaving(true);
     setError('');
     try {
       let savedRoutine;
-      if (currentRoutine.id && mode === 'edit' && !isPresetToEdit) { // True edit of existing user routine
+      if (currentRoutine.id && mode === 'edit' && !isPresetToEdit) {
         savedRoutine = await updateRoutineApi(currentRoutine.id, currentRoutine);
-      } else { // Create new (either from scratch, AI generated, or copied from preset)
+      } else {
         const routineToCreate = { ...currentRoutine };
-        delete routineToCreate.id; // Ensure no ID is sent for creation
+        delete routineToCreate.id;
         savedRoutine = await createNewRoutineApi(routineToCreate);
       }
       console.log('Workout saved:', savedRoutine.data);
       alert('Workout routine saved successfully!');
-      navigate('/evaluate-workout'); // Or to the display page of the saved routine
+      navigate('/evaluate-workout');
     } catch (err: any) {
       console.error("Save workout error:", err);
       setError(err.response?.data?.detail || JSON.stringify(err.response?.data) || err.message || "Failed to save workout.");
@@ -194,132 +164,108 @@ const WorkoutMod: React.FC = () => {
     }
   };
 
-  // --- Basic UI for displaying/editing the routine structure ---
-  // This part is highly simplified. A real UI for this would be complex with add/remove/edit for schedules/exercises.
-  const renderRoutineForm = () => (
-    <div>
-      <div>
-        <label>Routine Name:</label>
-        <input type="text" name="routine_name" value={currentRoutine.routine_name} onChange={handleInputChange} />
-      </div>
-      <div>
-        <label>Goal:</label>
-        <textarea name="goal" value={currentRoutine.goal} onChange={handleInputChange} />
-      </div>
-      <div>
-        <label>Description:</label>
-        <textarea name="description" value={currentRoutine.description} onChange={handleInputChange} />
-      </div>
-      {/* Add more top-level fields: experience_level, training_split, days_per_week, etc. */}
 
-      <h3 style={{marginTop: '20px'}}>Weekly Schedule:</h3>
+  const renderRoutineForm = () => (
+    <div className="routine-details-form">
+      {/* Basic Info */}
+      <div className="form-group">
+        <label htmlFor="routine_name">Routine Name</label>
+        <input id="routine_name" name="routine_name" type="text" className="form-input" value={currentRoutine.routine_name} onChange={handleInputChange} />
+      </div>
+      <div className="form-group">
+        <label htmlFor="description">Description</label>
+        <textarea id="description" name="description" className="form-textarea" value={currentRoutine.description} onChange={handleInputChange} />
+      </div>
+      <div className="form-group">
+        <label htmlFor="coach_response">Coach Response/Notes (from AI)</label>
+        <textarea id="coach_response" name="coach_response" className="form-textarea coach-response-textarea" value={currentRoutine.coach_response || ''} readOnly />
+      </div>
+
+      {/* Weekly Schedule */}
       {currentRoutine.weekly_schedule.map((item, scheduleIndex) => (
-        <div key={`schedule-${scheduleIndex}`} style={{ border: '1px dashed #ccc', padding: '10px', marginBottom: '10px' }}>
-          <div>
-            <label>Day/Number:</label>
-            <input
-              type="text"
-              value={item.day_of_week_or_number}
-              onChange={(e) => {
-                const newSchedule = [...currentRoutine.weekly_schedule];
-                newSchedule[scheduleIndex].day_of_week_or_number = e.target.value;
-                setCurrentRoutine(prev => ({ ...prev, weekly_schedule: newSchedule }));
-              }}
-            />
-          </div>
-          <div>
-            <label>Session Focus:</label>
-            <input
-              type="text"
-              value={item.session_focus}
-              onChange={(e) => {
-                const newSchedule = [...currentRoutine.weekly_schedule];
-                newSchedule[scheduleIndex].session_focus = e.target.value;
-                setCurrentRoutine(prev => ({ ...prev, weekly_schedule: newSchedule }));
-              }}
-            />
-          </div>
-          <h4>Exercises:</h4>
+        <div key={`schedule-${scheduleIndex}`} className="nested-form-section">
+          <h4>{item.day_of_week_or_number || `Day ${scheduleIndex + 1}`}</h4>
+          <p><strong>Focus:</strong> {item.session_focus}</p>
           {item.exercises.map((ex, exIndex) => (
-            <div key={`ex-${scheduleIndex}-${exIndex}`} style={{ border: '1px dotted #eee', padding: '5px', marginLeft: '20px', marginBottom: '5px' }}>
-              <input
-                placeholder="Exercise Name"
-                value={ex.exercise_name}
-                onChange={(e) => { /* ... complex update logic ... */ }}
-              />
-              {/* Add inputs for sets, reps, target_muscles (maybe a multi-select or tags input) etc. */}
-              {/* This becomes very complex to manage state for deeply nested editable forms */}
+            <div key={`ex-${scheduleIndex}-${exIndex}`} className="exercise-form-item">
+              <strong>{ex.exercise_name}</strong>
+              <p>Sets: {ex.sets}, Reps/Duration: {ex.reps_or_duration}, Rest: {ex.rest_period}</p>
+              <p>Muscles: {ex.target_muscles.join(', ')}</p>
+              {ex.notes && <p><em>Note: {ex.notes}</em></p>}
             </div>
           ))}
-          {/* Button to add new exercise to this day */}
         </div>
       ))}
-      {/* Button to add new schedule day */}
-
-      <div style={{marginTop: '10px'}}>
-        <label>Coach Response/Notes (from AI):</label>
-        <textarea name="coach_response" value={currentRoutine.coach_response || ''} readOnly style={{backgroundColor: '#f0f0f0', width: '100%', minHeight: '80px'}}/>
-      </div>
     </div>
   );
 
-  // --- Original Styles from template, adapt as needed ---
-  const styles: { [key: string]: React.CSSProperties } = {
-    pageContainer: { padding: '20px', fontFamily: 'sans-serif', maxWidth: '700px', margin: '0 auto' },
-    title: { fontSize: '24px', fontWeight: 'bold', marginBottom: '25px', textAlign: 'center' },
-    promptSection: { display: 'flex', alignItems: 'center', marginBottom: '25px' },
-    promptLabel: { marginRight: '10px', fontSize: '16px', whiteSpace: 'nowrap' },
-    promptInput: { flexGrow: 1, padding: '8px 10px', border: '1px solid black', marginRight: '10px', fontSize: '16px' },
-    submitButton: { padding: '8px 15px', border: '1px solid black', background: 'transparent', cursor: 'pointer', fontSize: '16px', whiteSpace: 'nowrap' },
-    detailsSection: { marginBottom: '25px', border: '1px solid #ddd', padding: '15px', borderRadius: '5px', background: '#f9f9f9' },
-    detailsTitle: { fontSize: '18px', marginBottom: '10px', color: '#333', borderBottom: '1px solid #eee', paddingBottom: '5px'},
-    saveButtonContainer: { display: 'flex', justifyContent: 'flex-end', marginTop: '20px' },
-    saveButton: { padding: '10px 20px', border: '1px solid black', backgroundColor: '#007bff', color: 'white', cursor: 'pointer', fontSize: '16px', borderRadius: '5px' },
-    errorText: { color: 'red', marginBottom: '10px', textAlign: 'center' },
-    loadingText: { textAlign: 'center', margin: '20px', fontStyle: 'italic' }
-  };
-
-  if (isLoadingExisting) return <p style={styles.loadingText}>Loading existing routine...</p>;
+  if (isLoadingExisting) return <div className="status-container"><p>Loading routine...</p></div>;
 
   return (
-    <div style={styles.pageContainer}>
-      <h1 style={styles.title}>{pageTitle}</h1>
+    <div className="mod-page-container">
+      <div className="mod-content-card">
+        <header className="mod-header"><h1>{pageTitle}</h1></header>
+        {error && <p className="error-message">{error}</p>}
+        
+        <div className="mod-main-layout">
+          {/* Left Column for User Input */}
+          <div className="mod-input-column">
+            <section className="mod-section">
+              <h2 className="mod-section-title">1. Generate or Modify with AI</h2>
+              <div className="form-group">
+                <label htmlFor="userPromptInput">Your Request</label>
+                <textarea
+                  id="userPromptInput"
+                  value={userPrompt}
+                  onChange={(e) => setUserPrompt(e.target.value)}
+                  className="form-textarea ai-prompt-textarea"
+                  placeholder="e.g., Create a 4-day upper/lower split for an intermediate lifter focused on strength."
+                  disabled={isAiLoading}
+                />
+              </div>
+              <button onClick={handlePromptSubmit} className="ai-submit-btn" disabled={isAiLoading}>
+                {isAiLoading ? 'Generating...' : 'Submit to AI'}
+              </button>
+            </section>
 
-      {error && <p style={styles.errorText}>{error}</p>}
+            <section className="mod-section">
+              <h2 className="mod-section-title">2. Fine-Tune Details</h2>
+              <div className="form-group">
+                <label htmlFor="goal">Primary Goal</label>
+                <input id="goal" name="goal" type="text" className="form-input" value={currentRoutine.goal} onChange={handleInputChange} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="experience_level">Experience Level</label>
+                <select id="experience_level" name="experience_level" className="form-select" value={currentRoutine.experience_level} onChange={handleInputChange}>
+                  <option>Beginner</option>
+                  <option>Intermediate</option>
+                  <option>Advanced</option>
+                </select>
+              </div>
+              {/* Add more inputs like training_split, days_per_week here */}
+            </section>
+          </div>
 
-      <div style={styles.promptSection}>
-        <label htmlFor="userPromptInput" style={styles.promptLabel}>
-          Your Request:
-        </label>
-        <input
-          type="text"
-          id="userPromptInput"
-          value={userPrompt}
-          onChange={(e) => setUserPrompt(e.target.value)}
-          style={styles.promptInput}
-          placeholder="e.g., Create a 3-day beginner full body routine"
-          disabled={isAiLoading}
-        />
-        <button onClick={handlePromptSubmit} style={styles.submitButton} disabled={isAiLoading}>
-          {isAiLoading ? 'Generating...' : (mode === 'create' && !currentRoutine.routine_name) ? 'Generate Routine' : 'Modify with AI'}
-        </button>
-      </div>
+          {/* Right Column for Routine Display */}
+          <div className="mod-routine-column">
+            <section className="mod-section">
+              <h2 className="mod-section-title">3. Review Your Routine</h2>
+              {currentRoutine.routine_name || currentRoutine.weekly_schedule.length > 0 ? (
+                renderRoutineForm()
+              ) : (
+                <p className="placeholder-text">
+                  {isAiLoading ? 'AI is generating your routine...' : 'Your generated routine will appear here. Or, you can start filling it out manually.'}
+                </p>
+              )}
+            </section>
+          </div>
+        </div>
 
-      <div style={styles.detailsSection}>
-        <h2 style={styles.detailsTitle}>Workout Details (AI Generated / Your Edits)</h2>
-        {currentRoutine.routine_name || currentRoutine.weekly_schedule[0]?.exercises.length > 0 ? (
-          renderRoutineForm() // Render the simplified form for now
-        ) : (
-          <p style={{ color: '#555' }}>
-            {isAiLoading ? 'AI is working...' : 'Enter a prompt and click "Generate" or "Modify", or fill in the details manually.'}
-          </p>
-        )}
-      </div>
-
-      <div style={styles.saveButtonContainer}>
-        <button onClick={handleSaveWorkout} style={styles.saveButton} disabled={isSaving || !currentRoutine.routine_name}>
-          {isSaving ? 'Saving...' : (mode === 'create' || (mode === 'edit' && isPresetToEdit)) ? 'Save New Routine' : 'Save Changes'}
-        </button>
+        <div className="save-button-container">
+          <button onClick={handleSaveWorkout} className="save-routine-btn" disabled={isSaving || !currentRoutine.routine_name}>
+            {isSaving ? 'Saving...' : 'Save Routine'}
+          </button>
+        </div>
       </div>
     </div>
   );
