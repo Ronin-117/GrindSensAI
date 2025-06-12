@@ -1,10 +1,8 @@
-// src/pages/ProfilePage.tsx
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// Make sure both API calls are available and imported
 import { getProfileApi, getUserWorkoutPlanApi } from './api';
+import './ProfilePage.css'; // Import the new stylesheet
 
-// Interface for the UserProfile data from your getProfileApi
 interface UserProfileData {
   id: number;
   user: number;
@@ -13,50 +11,58 @@ interface UserProfileData {
   age?: number;
   height?: number;
   weight?: number;
-  // Add other fields like first_name, last_name, email if your serializer provides them
 }
 
-// Interface for the WorkoutPlan data from getUserWorkoutPlanApi
 interface WorkoutPlanData {
-    id: number;
-    heat_level: number; // This is the field we want to display
-    // ... add other plan details if you need them, like current_routine_details
+  id: number;
+  heat_level: number;
 }
+
+// A small, self-contained component to render the heat meter using the fire GIF
+const HeatLevelDisplay: React.FC<{ level: number }> = ({ level }) => {
+  return (
+    <div className="heat-meter">
+      {Array.from({ length: 10 }, (_, i) => {
+        const isActive = i < level;
+        return (
+          <img
+            key={i}
+            src="https://media.tenor.com/KXakpzVoGJgAAAAi/feuer-fire.gif" // Points to the GIF in the public folder
+            alt={`Heat level ${i + 1}${!isActive ? ' (inactive)' : ''}`}
+            title={`Level ${i + 1}`}
+            className={`fire-gif ${isActive ? 'active' : 'inactive'}`}
+          />
+        );
+      })}
+    </div>
+  );
+};
+
 
 function ProfilePage() {
   const [profile, setProfile] = useState<UserProfileData | null>(null);
-  const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlanData | null>(null); // New state for plan data
+  const [workoutPlan, setWorkoutPlan] = useState<WorkoutPlanData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
-      const token = sessionStorage.getItem('accessToken');
-      if (!token) {
-        setError('You are not logged in. Redirecting to login...');
-        setLoading(false);
-        setTimeout(() => navigate('/login'), 2000);
-        return;
-      }
       setLoading(true);
       setError('');
       try {
-        // Fetch both sets of data concurrently for better performance
         const [profileResponse, planResponse] = await Promise.all([
           getProfileApi(),
-          getUserWorkoutPlanApi() // Fetch the workout plan
+          getUserWorkoutPlanApi(),
         ]);
         
-        setProfile(profileResponse.data as UserProfileData);
-        setWorkoutPlan(planResponse.data as WorkoutPlanData);
+        setProfile(profileResponse.data);
+        setWorkoutPlan(planResponse.data);
 
       } catch (err: any) {
         console.error('Failed to fetch profile or plan data:', err);
-        if (err.response && err.response.status === 401) {
+        if (err.response?.status === 401) {
           setError('Your session has expired. Please log in again. Redirecting...');
-          sessionStorage.removeItem('accessToken');
-          sessionStorage.removeItem('refreshToken');
           setTimeout(() => navigate('/login'), 3000);
         } else {
           setError(err.message || 'Failed to load page data.');
@@ -68,111 +74,56 @@ function ProfilePage() {
     fetchData();
   }, [navigate]);
 
-  // A small, self-contained component to render the heat meter
-  const HeatLevelDisplay: React.FC<{ level: number }> = ({ level }) => {
-    const heats = Array.from({ length: 10 }, (_, i) => {
-      const isActive = i < level;
-      const heatColor = `rgba(255, 69, 0, ${0.1 + (i * 0.09)})`; // OrangeRed with increasing opacity
-      return (
-        <div 
-          key={i} 
-          style={{
-            ...styles.heatBox,
-            backgroundColor: isActive ? heatColor : '#333',
-            boxShadow: isActive ? `0 0 5px ${heatColor}` : 'none',
-          }}
-          title={`Level ${i + 1}`}
-        ></div>
-      );
-    });
-    return <div style={styles.heatContainer}>{heats}</div>;
-  };
-
   if (loading) {
-    return <div style={styles.container}><p>Loading profile...</p></div>;
+    return <div className="status-container"><p>Loading profile...</p></div>;
   }
 
   if (error) {
-    return <div style={styles.container}><p style={{ color: 'red' }}>Error: {error}</p></div>;
+    return <div className="status-container"><p className="error-message">Error: {error}</p></div>;
   }
 
   if (!profile) {
-    return <div style={styles.container}><p>No profile data available.</p></div>;
+    return <div className="status-container"><p>No profile data available.</p></div>;
   }
 
   return (
-    <div style={styles.container}>
-      <h1>{profile.username}'s Profile</h1>
-      <div style={styles.profileDetail}>
-        <strong>Username:</strong> {profile.username || 'N/A'}
-      </div>
-      <div style={styles.profileDetail}>
-        <strong>Age:</strong> {profile.age ?? 'N/A'}
-      </div>
-      <div style={styles.profileDetail}>
-        <strong>Height (cm):</strong> {profile.height ?? 'N/A'}
-      </div>
-      <div style={styles.profileDetail}>
-        <strong>Weight (kg):</strong> {profile.weight ?? 'N/A'}
-      </div>
-      <div style={styles.profileDetail}>
-        <strong>Bio:</strong>
-        <p style={{ marginTop: '5px', whiteSpace: 'pre-wrap' }}>{profile.bio || 'No bio provided.'}</p>
-      </div>
+    <div className="profile-page-container">
+      <div className="profile-card">
+        <header className="profile-header">
+          <h1>{profile.username}'s Profile</h1>
+        </header>
+        
+        <div className="profile-details-grid">
+          <div className="detail-label">Username</div>
+          <div className="detail-value">{profile.username || 'N/A'}</div>
 
-      {/* --- HEAT LEVEL SECTION --- */}
-      <div style={styles.heatSection}>
-        <h2>Weekly Heat Level</h2>
-        <p style={styles.heatDescription}>Your activity level based on workout completion in the last 7 days.</p>
-        {workoutPlan ? (
-            <HeatLevelDisplay level={workoutPlan.heat_level} />
-        ) : (
-            // This shows if the workoutPlan fetch is still pending or failed
-            <p>Loading heat level...</p>
-        )}
+          <div className="detail-label">Age</div>
+          <div className="detail-value">{profile.age ?? 'N/A'}</div>
+
+          <div className="detail-label">Height (cm)</div>
+          <div className="detail-value">{profile.height ?? 'N/A'}</div>
+
+          <div className="detail-label">Weight (kg)</div>
+          <div className="detail-value">{profile.weight ?? 'N/A'}</div>
+        </div>
+        
+        <div className="bio-section">
+          <div className="detail-label">Bio</div>
+          <p className="detail-value">{profile.bio || 'No bio provided.'}</p>
+        </div>
+
+        <div className="heat-level-section">
+          <h2>Weekly Heat Level</h2>
+          <p>Your activity level based on workout completion in the last 7 days.</p>
+          {workoutPlan ? (
+              <HeatLevelDisplay level={workoutPlan.heat_level} />
+          ) : (
+              <p>Loading heat level...</p>
+          )}
+        </div>
       </div>
     </div>
   );
 }
-
-const styles = {
-  container: {
-    maxWidth: '600px',
-    margin: '40px auto',
-    padding: '20px 40px',
-    border: '1px solid #ddd',
-    borderRadius: '8px',
-    fontFamily: 'Arial, sans-serif',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.05)',
-  } as React.CSSProperties,
-  profileDetail: {
-    marginBottom: '15px',
-    paddingBottom: '15px',
-    borderBottom: '1px solid #eee',
-  } as React.CSSProperties,
-  heatSection: {
-    marginTop: '30px',
-    paddingTop: '20px',
-    borderTop: '1px solid #eee',
-    textAlign: 'center' as 'center',
-  },
-  heatDescription: {
-    fontSize: '0.9em',
-    color: '#666',
-    marginBottom: '20px',
-  },
-  heatContainer: {
-    display: 'flex',
-    justifyContent: 'center',
-    gap: '5px',
-    paddingBottom: '10px'
-  },
-  heatBox: {
-    width: '25px',
-    height: '40px',
-    borderRadius: '3px',
-    transition: 'background-color 0.5s ease, box-shadow 0.5s ease',
-  },
-};
 
 export default ProfilePage;

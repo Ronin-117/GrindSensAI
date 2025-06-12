@@ -1,0 +1,124 @@
+/* Main page container */
+.profile-page-container {
+  min-height: 100vh;
+  width: 100%;
+  box-sizing: border-box;
+  background-image: url('/profile.jpg');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  color: var(--color-text);
+  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--spacing-xxl);
+}
+
+/* The main card holding all the profile information */
+.profile-card {
+  width: 100%;
+  max-width: 700px;
+  border: 1px solid var(--border-color-light);
+  border-radius: var(--border-radius-large);
+  padding: var(--spacing-xxl);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: var(--spacing-xxl);
+}
+
+.profile-header h1 {
+  font-size: 2.5rem;
+  margin: 0;
+  text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+}
+
+/* A grid for neatly aligning user details */
+.profile-details-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr; /* Fixed width for labels, rest for value */
+  gap: var(--spacing-large) var(--spacing-xl);
+  border-bottom: 1px solid var(--border-color-light);
+  padding-bottom: var(--spacing-xl);
+}
+
+.detail-label {
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-muted);
+}
+
+.detail-value {
+  color: var(--color-text);
+}
+
+.bio-section {
+  margin-top: var(--spacing-large);
+}
+
+.bio-section .detail-label {
+  margin-bottom: var(--spacing-small);
+}
+
+.bio-section .detail-value {
+  white-space: pre-wrap; /* Respects newlines in the bio */
+  line-height: 1.6;
+}
+
+/* --- Heat Level Section --- */
+.heat-level-section {
+  margin-top: var(--spacing-xl);
+  padding-top: var(--spacing-xl);
+  border-top: 1px solid var(--border-color-light);
+  text-align: center;
+}
+
+.heat-level-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: var(--spacing-small);
+}
+
+.heat-level-section p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: var(--spacing-xl);
+}
+
+.heat-meter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--spacing-small);
+  padding-bottom: 10px;
+}
+
+/* --- Styling for the Fire GIF --- */
+.fire-gif {
+  width: 50px;
+  height: 50px;
+  transition: all 0.4s ease-in-out;
+  filter:  sepia(100%) hue-rotate(180deg) saturate(8) brightness(0.7) drop-shadow(0 0 8px #01e1ffcc);/*blue fire*/
+}
+
+/* This is the magic for inactive flames */
+.fire-gif.inactive {
+  filter: grayscale(100%) brightness(0.6);
+  opacity: 0.4;
+  transform: scale(0.9);
+}
+
+/* Loading/Error states */
+.status-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  font-size: 1.5rem;
+}
+.error-message {
+  color: var(--color-status-error);
+}
