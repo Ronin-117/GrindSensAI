@@ -117,7 +117,7 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
             
             for (const landmark of results.landmarks) {
                 drawingUtils.drawLandmarks(landmark, { radius: 2, fillColor: '#FFFFFF' });
-                drawingUtils.drawConnectors(landmark, PoseLandmarker.POSE_CONNECTIONS, { color: '#00FF00' });
+                drawingUtils.drawConnectors(landmark, PoseLandmarker.POSE_CONNECTIONS, { color: '#007bff' });
             }
         }
         canvasCtx.restore();
@@ -176,8 +176,8 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
                 <video ref={videoRef} autoPlay playsInline muted onPlaying={handleVideoPlay} className="input_video"></video>
                 <canvas ref={canvasRef} className="output_canvas"></canvas>
             </div>
-            <p className="status-text">{landmarkerLoaded ? statusText : "Loading AI Model..."}</p>
-            <p>Reps = {repCounterRef.current} / {targetRepsRef.current}</p>
+            <p >{landmarkerLoaded ? statusText : "Loading AI Model..."}</p>
+            {/* <p>Reps = {repCounterRef.current} / {targetRepsRef.current}</p> */}
             {/* The enable/disable button is now removed. Parent controls this. */}
         </div>
     );
