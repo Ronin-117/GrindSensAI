@@ -1,229 +1,139 @@
-# 💪 GrindSensAI - Your AI-Powered Fitness Companion 🤖
+# GrindSensAI - AI Personal Training Assistant
 
-# <!-- Optional: Add a logo or a captivating banner image here -->
-# <!-- ![GrindSensAI Logo](path/to/your/logo.png) -->
+ <!-- Optional: Replace with a screenshot of your dashboard -->
 
-# <p align="center">
-#   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build Status">
-#   <img src="https://img.shields.io/badge/python-Django-blue.svg" alt="Python Django">
-#   <img src="https://img.shields.io/badge/frontend-React%20(Vite%20%2B%20TS)-cyan.svg" alt="React Vite TypeScript">
-#   <img src="https://img.shields.io/badge/AI-Gemini%20%26%20MediaPipe-orange.svg" alt="AI Powered">
-#   <img src="https://img.shields.io/github/license/Ronin-117/GrindSensAI" alt="License">
-#   <img src="https://img.shields.io/github/stars/Ronin-117/GrindSensAI?style=social" alt="GitHub Stars">
-#   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
-# </p>
+**GrindSensAI** is a modern, full-stack web application designed to be your intelligent personal training partner. It leverages the power of Google's Gemini AI to generate personalized workout routines and provides real-time exercise form analysis and rep counting using your webcam, powered by MediaPipe.
 
-# ## 🌟 Overview
+This project is built with a **React/TypeScript frontend** for a dynamic and interactive user experience, and a **Django/Django REST Framework backend** for a robust and secure API.
 
-# **GrindSensAI** is not just another workout app; it's your personal AI fitness coach! We're revolutionizing your fitness journey by combining cutting-edge AI (powered by Google Gemini) for intelligent workout planning with advanced Computer Vision (using MediaPipe) for real-time exercise form analysis and rep counting. Get personalized routines, track your progress with precision, and ensure you're performing exercises correctly with our "SuperVision" feature.
+---
 
-# Whether you're a beginner or a seasoned athlete, GrindSensAI adapts to your needs, helping you achieve your fitness goals smarter and safer.
+## ✨ Core Features
 
-# ## ✨ Features
+*   **User-Specific Data**: Secure authentication (JWT) ensures that each user's dashboard, routines, and workout history are completely private.
+*   **AI-Powered Workout Generation**: Users can interact with a prompt-based interface to ask for custom workout routines tailored to their goals. The backend uses Google's Gemini Pro to generate detailed, structured workout plans.
+*   **Real-Time AI Supervision**:
+    *   Utilizes **Mediapipe PoseLandmarker** directly in the browser for live pose estimation.
+    *   Client-side algorithms analyze joint angles and body position to **count repetitions** for various exercises (curls, squats, shoulder presses, etc.).
+    *   Provides a live camera feed with landmark overlays so users can monitor their form.
+*   **Comprehensive Workout Management**:
+    *   **Preset Routines**: A library of expertly designed routines available to all users.
+    *   **Custom Routines**: Users can create, edit, save, and delete their own workout plans.
+    *   **Routine Selection**: Users can select a routine as their "current plan" to track progress against.
+*   **Progress Tracking & Analytics**:
+    *   **Daily Workout Logging**: Automatically creates a log for each day's workout based on the selected routine.
+    *   **GitHub-Style Contribution Graph**: A visual dashboard that displays workout completion and consistency over time.
+    *   **"Heat Level" Metric**: A dynamic score calculated based on workout completion over the last 7 days, providing a quick glance at recent activity levels.
 
-# *   🧠 **AI-Powered Workout Generation:** Get workout routines intelligently crafted by Google Gemini, tailored to your goals and preferences.
-# *   🤖 **AI-Assisted Routine Modification:** Need to tweak your plan? Our AI helps you adjust exercises and intensity on the fly.
-# *   👀 **CV "SuperVision" Exercise Tracking:**
-#     *   Real-time pose detection and form analysis using MediaPipe.
-#     *   Automatic rep counting for exercises like bicep curls, sit-ups, and more!
-#     *   Get feedback to improve your form and prevent injuries.
-# *   👤 **Personalized User Experience:**
-#     *   Secure Login/Signup and dedicated User Profiles.
-#     *   User-specific database for storing custom training routines and progress.
-# *   🏋️ **Workout Management:**
-#     *   Access a library of preset workout routines.
-#     *   Create, save, and manage your own workout plans.
-#     *   "Today's Workout" page to keep you focused.
-#     *   Log your workouts and track completion percentages.
-# *   📊 **Insightful Dashboard:**
-#     *   Visualize your activity with dynamic charts.
-#     *   Stay motivated with daily fitness quotes.
-#     *   Track your "Heat Level" - a unique indicator of your workout intensity and consistency.
-# *   📝 **Workout Evaluation & Results:** Review your performance and see how you're progressing.
+---
 
-# <!-- Optional: Include a screenshot or a GIF showcasing your project in action -->
-# <!-- ![GrindSensAI Dashboard](path/to/dashboard_screenshot.png) -->
-# <!-- ![GrindSensAI CV Tracking](path/to/cv_tracking.gif) -->
+## 🛠️ Tech Stack
 
-# ## 🛠️ Technologies Used
+### Frontend
+*   **React** (with TypeScript) - For building a modern, component-based user interface.
+*   **React Router** - For client-side routing and navigation.
+*   **Axios** - For making HTTP requests to the Django backend.
+*   **MediaPipe Tasks Vision (`PoseLandmarker`)** - For high-performance, in-browser pose estimation.
+*   **Vite** (or Create React App) - As the frontend build tool.
 
-# *   **Frontend:** React, TypeScript, Vite
-# *   **Backend:** Python, Django, Django REST Framework (likely)
-# *   **AI & Computer Vision:**
-#     *   Google Gemini (for workout generation & modification)
-#     *   MediaPipe (for pose detection and exercise tracking)
-# *   **Database:** (e.g., PostgreSQL, SQLite - specify based on your setup)
-# *   **DevOps/Automation:** Scripts for automated application startup.
-# *   **Styling:** (e.g., Tailwind CSS, Material UI - add if used)
+### Backend
+*   **Python**
+*   **Django** & **Django REST Framework (DRF)** - For building a powerful and secure RESTful API.
+*   **Django Channels** - For real-time WebSocket communication (future implementation for backend rep counting).
+*   **Simple JWT (djangorestframework-simplejwt)** - For JSON Web Token-based authentication.
+*   **Google Generative AI SDK** - To connect with the Gemini API for workout generation.
+*   **PostgreSQL / SQLite** - As the database.
+*   **CORS Headers** - To handle cross-origin requests from the React frontend.
 
-# ## ⚙️ Prerequisites
+---
 
-# Before you begin, ensure you have the following installed:
+## 🚀 Getting Started
 
-# *   [Node.js (LTS version recommended)](https://nodejs.org/)
-# *   [Python (3.8+ recommended)](https://www.python.org/downloads/)
-# *   [Pip (Python package installer)](https://pip.pypa.io/en/stable/installation/)
-# *   [Git](https://git-scm.com/)
-# *   (Potentially) A C++ compiler and relevant build tools if MediaPipe requires local building for some components.
-# *   (Potentially) Specific Python packages for CV like OpenCV (`pip install opencv-python`).
+### Prerequisites
+- Node.js and npm/yarn
+- Python 3.11 and pip
+- A virtual environment tool (like `venv` or `conda`)
+- A Google Gemini API Key
 
-# ## 🚀 Getting Started
+### Backend Setup
+1.  **Clone the repository:**
+    ```bashi
+    git clone https://github.com/Ronin-117/GrindSensAI
+    cd GrindSensAI
+    ```
+2.  **Create and activate a virtual environment:**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # On Windows, use `venv\Scripts\activate`
+    ```
+3.  **Install Python dependencies:**
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  **Set up environment variables:**
+    *   Create a `.env` file in the `backend` directory.
+    *   Add your Gemini API key:
+        ```env
+        GEMINI_API_KEY="your_google_gemini_api_key_here"
+        ```
+5.  **Run database migrations:**
+    ```bash
+    python manage.py makemigrations
+    python manage.py migrate
+    ```
+6.  **(Optional) Seed the database with preset routines:**
+    ```bash
+    python seed_presets.py # Assuming you have this script
+    ```
+7.  **Start the Django development server:**
+    ```bash
+    python manage.py runserver
+    # The backend will be running on http://127.0.0.1:8000
+    ```
 
-# Follow these steps to get a local copy of GrindSensAI up and running.
+### Frontend Setup
+1.  **Navigate to the frontend directory:**
+    ```bash
+    cd ../frontend # From the backend directory
+    ```
+2.  **Install Node.js dependencies:**
+    ```bash
+    npm install
+    # or
+    yarn install
+    ```
+3.  **Set up environment variables:**
+    *   Check `src/api.ts` (or `api.js`) and ensure the `API_BASE_URL` points to your running Django server (e.g., `http://127.0.0.1:8000/api`).
+4.  **Start the React development server:**
+    ```bash
+    npm run dev
+    # or
+    yarn dev
+    # The frontend will be running on http://localhost:5173 (or another port)
+    ```
 
-# ### 1. Clone the repository
+---
 
-# ```bash
-# git clone https://github.com/Ronin-117/GrindSensAI.git
-# cd GrindSensAI
-# ```
+## 📖 Key Code Implementation Notes
 
-# ### 2. Backend Setup (Django)
+### Frontend: The `PoseDetector` / `ExerciseSupervision` Component
+-   **Challenge:** Managing state within a high-frequency `requestAnimationFrame` loop.
+-   **Solution:** The component uses a combination of `useState` and `useRef`.
+    -   `useState` is used for values that must trigger a UI re-render (e.g., status messages).
+    -   `useRef` is used for internal logic state that needs to be updated and read synchronously without causing a re-render (e.g., `stage` and `repCounterRef`). This prevents stale state issues inside the loop.
+-   **Lifecycle:** The component's lifecycle is controlled by an `isActive` prop passed from the parent. `useEffect` hooks manage the setup and teardown of the MediaPipe landmarker and the camera stream, ensuring resources are released correctly.
 
-# Navigate to your backend directory (e.g., `cd backend` - adjust if different):
+### Backend: `DailyLogGetOrCreateView`
+-   This "smart" API endpoint is responsible for fetching a user's workout log for the current day.
+-   If no log exists, it dynamically populates a new log instance with the correct exercises scheduled for that specific day based on the user's currently selected `TrainingRoutine`, then saves and returns it. This ensures the frontend always has the right starting point for a workout session.
 
-# ```bash
-# # Create and activate a virtual environment
-# python -m venv venv
-# source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-#
-# # Install Python dependencies
-# pip install -r requirements.txt
-#
-# # Set up environment variables (if any)
-# # cp .env.example .env
-# # # Then, update the .env file with your specific configurations (e.g., Gemini API Key, DB_SECRET_KEY)
-#
-# # Apply database migrations
-# python manage.py migrate
-#
-# # Create a superuser (optional, for admin panel access)
-# python manage.py createsuperuser
-#
-# # Run the backend server
-# python manage.py runserver
-# ```
-# The backend will typically run on `http://127.0.0.1:8000/`.
+---
 
-# ### 3. Frontend Setup (React + Vite)
+## 📸 Screenshots
 
-# Navigate to your frontend directory (e.g., `cd frontend` or `cd client` - adjust if different):
+<!-- 
+Add more screenshots of your application here to showcase its features!
+Example:
 
-# ```bash
-# # Install Node.js dependencies
-# npm install
-# # or
-# # yarn install
-#
-# # Set up environment variables (if any, for API endpoints, etc.)
-# # cp .env.example .env
-# # # Then, update the .env file
-#
-# # Run the frontend development server
-# npm run dev
-# # or
-# # yarn dev
-# ```
-# The frontend will typically run on `http://localhost:3000/` (or another port specified by Vite).
 
-# ### 4. (Optional) Automated Startup
-
-# You mentioned an "automated app startup process." If you have a script for this (e.g., using `concurrently` or a shell script), include instructions here:
-# *Example:*
-# ```bash
-# # (In the root directory)
-# # This script might start both frontend and backend servers.
-# ./start_app.sh
-# # or
-# # npm run start-all
-# ```
-
-# ## 🎮 Usage
-
-# 1.  Open your browser and navigate to the frontend URL (e.g., `http://localhost:3000/`).
-# 2.  **Sign up** for a new account or **Login** if you already have one.
-# 3.  Explore your **Dashboard**: Check your activity, get motivated!
-# 4.  Navigate to **Workout Routines**:
-#     *   Browse preset routines.
-#     *   Use the AI to generate a new routine tailored to you.
-#     *   Create or modify routines.
-# 5.  Go to **Today's Workout**:
-#     *   Select a routine for your session.
-#     *   Start an exercise. The **SuperVision** camera feed will activate.
-#     *   Follow the on-screen guidance for correct form. Reps will be counted automatically!
-# 6.  Check your **Profile** to see your progress and "Heat Level".
-
-# ## 🧪 Running Tests
-
-# Provide instructions on how to run tests for both frontend and backend if you have them.
-
-# *   **Backend (Django):**
-#     ```bash
-#     # (In the backend directory)
-#     python manage.py test
-#     ```
-# *   **Frontend (React/Vite):**
-#     ```bash
-#     # (In the frontend directory)
-#     npm test
-#     # or
-#     # yarn test
-#     ```
-
-# ## 🏗️ Project Structure (Simplified Example)
-
-# A high-level overview of how your project might be organized:
-
-# ```
-# GrindSensAI/
-# ├── backend/                  # Django backend
-# │   ├── manage.py
-# │   ├── backend/
-# │   ├── gym/
-# ├── frontend/                 # React + Vite frontend
-# │   ├── public/
-# │   ├── src/
-# │   ├── package.json
-# │   └── vite.config.ts
-# ├── .gitignore
-# ├── LICENSE                   # IMPORTANT: Add your license file!
-# └── README.md                 # This file!
-# ```
-
-# ## 🤝 Contributing
-
-# We're excited to see GrindSensAI grow! Contributions are welcome. Please follow these steps:
-
-# 1.  **Fork the repository** on GitHub.
-# 2.  **Create a new branch:** `git checkout -b feature/your-awesome-feature` or `bugfix/issue-123`.
-# 3.  **Make your changes:** Implement your feature or fix the bug.
-# 4.  **Write tests** for your changes.
-# 5.  **Commit your changes:** Use clear and descriptive commit messages (e.g., `feat: Add real-time squat form analysis`).
-# 6.  **Push to your forked branch:** `git push origin feature/your-awesome-feature`.
-# 7.  **Open a Pull Request** to the `main` branch of `Ronin-117/GrindSensAI`.
-
-# Please ensure your code adheres to any existing linting and formatting standards.
-
-# <!-- Optional: Link to a more detailed CONTRIBUTING.md file -->
-# <!-- See CONTRIBUTING.md for more detailed contribution guidelines. -->
-
-# ## 📜 License
-
-# This project is currently licensed under the **MIT License**. Please see the `LICENSE` file for full details.
-# *(Note: If you haven't added a LICENSE file, please do so! Choose one that suits your project, e.g., MIT, Apache 2.0, GPL.)*
-
-# ## 💖 Acknowledgements
-
-# *   The **Google Gemini** team for their powerful AI models.
-# *   The **MediaPipe** team for their incredible pose estimation tools.
-# *   Anyone whose open-source code or ideas inspired parts of this project.
-
-# ## 📞 Contact
-
-# Neil (Ronin-117) – [@your_twitter_handle (Optional)] – [your.email@example.com (Optional)]
-
-# Project Link: https://github.com/Ronin-117/GrindSensAI
-
-# ---
-
-# *Keep Grinding, Stay Sensible!*
+-->
