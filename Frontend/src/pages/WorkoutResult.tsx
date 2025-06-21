@@ -1,14 +1,12 @@
-// filepath: (e.g., src/pages/WorkoutResult.tsx or src/components/WorkoutResult.tsx)
 import React from 'react';
 
 interface WorkoutResultItem {
   id: string;
   name: string;
-  isCompleted: boolean; // true for tick (✓), false for cross (✗)
+  isCompleted: boolean;
 }
 
 const WorkoutResult = () => {
-  // Mock data based on your sketch
   const workoutItems: WorkoutResultItem[] = [
     { id: '1', name: 'cbcwvbcuiuwbviw', isCompleted: true },
     { id: '2', name: 'wbciicwiebcibe', isCompleted: true },
@@ -17,8 +15,6 @@ const WorkoutResult = () => {
 
   const totalScore = "75/100";
 
-  // For the "HEAT: O O O" part.
-  // We'll represent these as an array of 3, for now just for rendering count.
   const heatIndicatorsCount = 3;
 
   const styles: { [key: string]: React.CSSProperties } = {
@@ -35,13 +31,13 @@ const WorkoutResult = () => {
     },
     contentRow: {
       display: 'flex',
-      justifyContent: 'space-between', // Puts details left, score right
-      alignItems: 'flex-start', // Align to top
+      justifyContent: 'space-between',
+      alignItems: 'flex-start', 
       marginBottom: '30px',
     },
     detailsSection: {
-      flex: 2, // Take more space
-      marginRight: '20px', // Space between details and score
+      flex: 2, 
+      marginRight: '20px',
     },
     sectionTitle: {
       fontSize: '18px',
@@ -65,26 +61,23 @@ const WorkoutResult = () => {
       flexGrow: 1,
     },
     workoutStatus: {
-      fontSize: '20px', // Make tick/cross prominent
-      marginLeft: '10px', // Space between name and status
-      width: '25px', // Fixed width for alignment
+      fontSize: '20px', 
+      marginLeft: '10px', 
+      width: '25px', 
       textAlign: 'center',
-      // The red color from your sketch is omitted as per "no color" request.
-      // If you wanted red for '✗':
-      // color: item.isCompleted ? 'black' : 'red',
     },
     scoreSection: {
-      flex: 1, // Take less space
-      textAlign: 'left', // Align text to the left within this section
+      flex: 1, 
+      textAlign: 'left', 
     },
     scoreLabel: {
       fontSize: '18px',
-      fontWeight: 'normal', // As "Total Score:" is not bold in sketch
+      fontWeight: 'normal', 
       marginBottom: '5px',
       color: '#333',
     },
     scoreValue: {
-      fontSize: '22px', // Larger score value
+      fontSize: '22px', 
       fontWeight: 'bold',
       color: '#000',
     },
@@ -94,21 +87,20 @@ const WorkoutResult = () => {
       alignItems: 'center',
     },
     heatLabel: {
-      fontSize: '28px', // Large "HEAT" label as in sketch
+      fontSize: '28px', 
       fontWeight: 'bold',
       marginRight: '15px',
-      color: '#000', // Plain black
+      color: '#000',
     },
     heatIndicatorContainer: {
       display: 'flex',
     },
     heatIndicator: {
-      width: '30px', // Size of the circle
+      width: '30px', 
       height: '30px',
-      border: '2px solid black', // Black border to make it look like an 'O'
-      borderRadius: '50%', // Makes it a circle
-      margin: '0 5px', // Space between circles
-      // backgroundColor: 'transparent', // No fill
+      border: '2px solid black',
+      borderRadius: '50%', 
+      margin: '0 5px',
     },
   };
 
@@ -125,8 +117,6 @@ const WorkoutResult = () => {
                 <span style={styles.workoutName}>{item.name}</span>
                 <span style={{
                     ...styles.workoutStatus,
-                    // If you want to apply specific styles for ✓ vs ✗ without color:
-                    // fontWeight: item.isCompleted ? 'bold' : 'normal',
                   }}
                 >
                   {item.isCompleted ? '✓' : '✗'}

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getProfileApi, getUserWorkoutPlanApi } from './api';
-import './ProfilePage.css'; // Import the new stylesheet
+import './ProfilePage.css';
 
 interface UserProfileData {
   id: number;
@@ -18,7 +18,6 @@ interface WorkoutPlanData {
   heat_level: number;
 }
 
-// A small, self-contained component to render the heat meter using the fire GIF
 const HeatLevelDisplay: React.FC<{ level: number }> = ({ level }) => {
   return (
     <div className="heat-meter">
@@ -27,7 +26,7 @@ const HeatLevelDisplay: React.FC<{ level: number }> = ({ level }) => {
         return (
           <img
             key={i}
-            src="https://media.tenor.com/KXakpzVoGJgAAAAi/feuer-fire.gif" // Points to the GIF in the public folder
+            src="https://media.tenor.com/KXakpzVoGJgAAAAi/feuer-fire.gif"
             alt={`Heat level ${i + 1}${!isActive ? ' (inactive)' : ''}`}
             title={`Level ${i + 1}`}
             className={`fire-gif ${isActive ? 'active' : 'inactive'}`}

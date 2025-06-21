@@ -269,7 +269,7 @@ input:checked + .slider:after {
   margin-top: var(--spacing-xl);
   font-size: 1.2rem;
   font-weight: bold;
-  background-color: var(--color-status-success);
+  background-color: var(--color-primary);
   color: var(--color-text);
   border: none;
   border-radius: var(--border-radius-medium);
@@ -277,7 +277,7 @@ input:checked + .slider:after {
   transition: all 0.2s ease;
 }
 .save-progress-btn:hover {
-  background-color: #218838;
+  background-color:var(--color-primary-dark)
 }
 .save-progress-btn:disabled {
   background-color: #555;

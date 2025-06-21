@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { createNewRoutineApi, generateWorkoutWithAIApi, getSpecificRoutineApi, updateRoutineApi } from './api';
-import './WorkoutMod.css'; // Import the new stylesheet
+import './WorkoutMod.css';
 
-// Interfaces remain the same
 interface ExerciseData {
   id?: number;
   exercise_name: string;
@@ -66,9 +65,7 @@ const WorkoutMod: React.FC = () => {
   const [error, setError] = useState<string>('');
   const [pageTitle, setPageTitle] = useState<string>('Create New Workout Routine');
 
-  // All logic (useEffect, handlers) remains the same.
   useEffect(() => {
-    // ... same logic as before
     if ((mode === 'edit' || mode === 'view') && routineIdToEdit) {
       setPageTitle(mode === 'edit' ? 'Edit Workout Routine' : 'View Workout Routine');
       if (isPresetToEdit && mode === 'edit') {
@@ -106,13 +103,11 @@ const WorkoutMod: React.FC = () => {
   }, [mode, routineIdToEdit, isPresetToEdit]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    // ... same logic as before
     const { name, value } = e.target;
     setCurrentRoutine(prev => ({ ...prev, [name]: value }));
   };
 
   const handlePromptSubmit = async () => {
-    // ... same logic as before
     if (!userPrompt.trim()) {
       setError('Please enter a prompt.');
       return;
@@ -141,7 +136,6 @@ const WorkoutMod: React.FC = () => {
   };
 
   const handleSaveWorkout = async () => {
-    // ... same logic as before
     setIsSaving(true);
     setError('');
     try {
@@ -154,7 +148,6 @@ const WorkoutMod: React.FC = () => {
         savedRoutine = await createNewRoutineApi(routineToCreate);
       }
       console.log('Workout saved:', savedRoutine.data);
-      alert('Workout routine saved successfully!');
       navigate('/evaluate-workout');
     } catch (err: any) {
       console.error("Save workout error:", err);
@@ -167,7 +160,6 @@ const WorkoutMod: React.FC = () => {
 
   const renderRoutineForm = () => (
     <div className="routine-details-form">
-      {/* Basic Info */}
       <div className="form-group">
         <label htmlFor="routine_name">Routine Name</label>
         <input id="routine_name" name="routine_name" type="text" className="form-input" value={currentRoutine.routine_name} onChange={handleInputChange} />
@@ -181,7 +173,6 @@ const WorkoutMod: React.FC = () => {
         <textarea id="coach_response" name="coach_response" className="form-textarea coach-response-textarea" value={currentRoutine.coach_response || ''} readOnly />
       </div>
 
-      {/* Weekly Schedule */}
       {currentRoutine.weekly_schedule.map((item, scheduleIndex) => (
         <div key={`schedule-${scheduleIndex}`} className="nested-form-section">
           <h4>{item.day_of_week_or_number || `Day ${scheduleIndex + 1}`}</h4>
@@ -208,7 +199,6 @@ const WorkoutMod: React.FC = () => {
         {error && <p className="error-message">{error}</p>}
         
         <div className="mod-main-layout">
-          {/* Left Column for User Input */}
           <div className="mod-input-column">
             <section className="mod-section">
               <h2 className="mod-section-title">1. Generate or Modify with AI</h2>
@@ -242,11 +232,9 @@ const WorkoutMod: React.FC = () => {
                   <option>Advanced</option>
                 </select>
               </div>
-              {/* Add more inputs like training_split, days_per_week here */}
             </section>
           </div>
 
-          {/* Right Column for Routine Display */}
           <div className="mod-routine-column">
             <section className="mod-section">
               <h2 className="mod-section-title">3. Review Your Routine</h2>

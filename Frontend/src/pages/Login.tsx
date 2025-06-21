@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createProfileApi, loginUserApi, registerUserApi } from './api';
-import './Login.css'; // Import the new CSS file
+import './Login.css';
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
   const navigate = useNavigate();
 
-  // ... (all your state variables remain the same)
   const [loginUsername, setLoginUsername] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [signupUsername, setSignupUsername] = useState('');
@@ -22,8 +21,6 @@ function Login() {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // ... (all your handler functions like handleToggle, handleLoginSubmit, handleSignupSubmit remain exactly the same)
-  // --- NO CHANGES NEEDED FOR LOGIC ---
   const handleToggle = (isLoginView: boolean) => {
     if (isLogin === isLoginView) return; 
     setIsLogin(isLoginView);
@@ -139,7 +136,6 @@ function Login() {
         Your browser does not support the video tag.
       </video>
       
-      {/* --- MODIFIED JSX STRUCTURE --- */}
       <form
         className="login-form-container"
         onSubmit={isLogin ? handleLoginSubmit : handleSignupSubmit}
@@ -153,7 +149,6 @@ function Login() {
         {error && <p className="message error-message">{error}</p>}
         {successMessage && <p className="message success-message">{successMessage}</p>}
         
-        {/* This new div will contain the scrollable fields */}
         <div className="scrollable-form-content">
           {isLogin ? (
             <div className="form-content" key="login-form">
@@ -205,7 +200,6 @@ function Login() {
           )}
         </div>
 
-        {/* The submit button is now a direct child of the form, outside the scrollable area */}
         <button type="submit" disabled={loading} className="submit-btn">
           {loading ? (isLogin ? 'Logging In...' : 'Signing Up...') : (isLogin ? 'Log In' : 'Sign Up')}
         </button>

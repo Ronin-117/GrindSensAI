@@ -6,7 +6,7 @@ from datetime import timedelta, date as DateObject
 
 
 # Create your models here.
-class UserProfile(models.Model): # Optional: for extra user-specific info
+class UserProfile(models.Model): 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(blank=True)
     age = models.PositiveIntegerField(null=True, blank=True)

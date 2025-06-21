@@ -41,7 +41,6 @@ function Navbar() {
 
         {isLoggedIn && (
           <li>
-            {/* The logout button shares the .nav-item style but has its own special hover */}
             <button onClick={handleLogout} className="nav-item logout-btn">
               <i className="fas fa-sign-out-alt"></i>
               <span className="nav-text">Logout</span>

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOrCreateDailyLogApi, updateDailyLogApi } from './api';
 import PoseDetector from './PoseDetector';
-import './TodaysWorkout.css'; // Import the new stylesheet
+import './TodaysWorkout.css';
 
 // Interfaces remain the same
 interface LoggedExercise {
@@ -35,7 +35,6 @@ const TodaysWorkout: React.FC = () => {
   const [expandedExerciseIndex, setExpandedExerciseIndex] = useState<number | null>(null);
   const navigate = useNavigate();
 
-  // All logic (fetchData, handlers, etc.) remains the same.
   const getTodayDateString = () => new Date().toISOString().split('T')[0];
   const fetchTodaysWorkoutLog = useCallback(async () => {
     setIsLoading(true); setError('');
@@ -52,7 +51,7 @@ const TodaysWorkout: React.FC = () => {
     } finally { setIsLoading(false); }
   }, []);
   useEffect(() => { fetchTodaysWorkoutLog(); }, [fetchTodaysWorkoutLog]);
-  const calculateOverallCompletion = useCallback( // ... same logic
+  const calculateOverallCompletion = useCallback(
     (currentExercises: LoggedExercise[]): number => {
     if (!currentExercises || currentExercises.length === 0) {
       return (dailyLog?.completion_percentage === 100 && dailyLog?.logged_exercises.length === 0) ? 100 : 0;
@@ -62,13 +61,13 @@ const TodaysWorkout: React.FC = () => {
     currentExercises.forEach(ex => {
       if (ex.completed_status === 'full') sumOfIndividualExerciseProgress += 100;
       else if (ex.completed_status === 'partial') {
-        let targetSetsNum = 1; try { targetSetsNum = parseInt(ex.target_sets.split('-')[0], 10) || 1; } catch { /* ignore */ }
+        let targetSetsNum = 1; try { targetSetsNum = parseInt(ex.target_sets.split('-')[0], 10) || 1; } catch { }
         if (targetSetsNum > 0) sumOfIndividualExerciseProgress += Math.min(100, (ex.actual_sets_completed / targetSetsNum) * 100);
       }
     });
     return totalExercises > 0 ? Math.round(sumOfIndividualExerciseProgress / totalExercises) : 100;
   }, [dailyLog?.completion_percentage, dailyLog?.logged_exercises.length]);
-  const handleExerciseUpdate = (exerciseIndex: number, updatedData: Partial<LoggedExercise>) => { // ... same logic
+  const handleExerciseUpdate = (exerciseIndex: number, updatedData: Partial<LoggedExercise>) => { 
     setDailyLog(prevLog => {
       if (!prevLog) return null;
       const updatedExercises = prevLog.logged_exercises.map((ex, idx) =>
@@ -90,7 +89,7 @@ const TodaysWorkout: React.FC = () => {
       return { ...prevLog, logged_exercises: updatedExercises, completion_percentage: newOverallCompletion };
     });
   };
-  const incrementSet = (exerciseIndex: number) => { // ... same logic
+  const incrementSet = (exerciseIndex: number) => {
     if (!dailyLog) return; const ex = dailyLog.logged_exercises[exerciseIndex];
     const maxSets = parseInt(ex.target_sets.split('-').pop() || ex.target_sets, 10) || 1;
     const newSetsCompleted = Math.min(ex.actual_sets_completed + 1, maxSets);
@@ -104,7 +103,7 @@ const TodaysWorkout: React.FC = () => {
         current_reps_in_ai_set: 0
     });
   };
-  const decrementSet = (exerciseIndex: number) => { // ... same logic
+  const decrementSet = (exerciseIndex: number) => {
     if (!dailyLog) return; const ex = dailyLog.logged_exercises[exerciseIndex];
     const newSetsCompleted = Math.max(0, ex.actual_sets_completed - 1);
     const newRepsPerSet = ex.actual_reps_per_set.slice(0, newSetsCompleted);
@@ -114,7 +113,7 @@ const TodaysWorkout: React.FC = () => {
         current_reps_in_ai_set: 0
     });
   };
-  const handleSaveProgress = async () => { // ... same logic
+  const handleSaveProgress = async () => { 
     if (!dailyLog) { setError("No workout data to save."); return; }
     setIsSaving(true); setError('');
     try {
@@ -124,11 +123,10 @@ const TodaysWorkout: React.FC = () => {
         completion_percentage: finalCompletionPercentage,
       };
       await updateDailyLogApi(dailyLog.id, dataToSave);
-      alert("Progress saved successfully!");
     } catch (err: any) { setError("Failed to save progress."); }
     finally { setIsSaving(false); }
   };
-  const handleAiRepCounted = (exerciseIndex: number, repCount: number) => { // ... same logic
+  const handleAiRepCounted = (exerciseIndex: number, repCount: number) => { 
     setDailyLog(prevLog => {
         if (!prevLog) return null;
         const updatedExercises = prevLog.logged_exercises.map((ex, idx) => 
@@ -137,7 +135,7 @@ const TodaysWorkout: React.FC = () => {
         return { ...prevLog, logged_exercises: updatedExercises };
     });
   };
-  const handleAiSetCompleted = (exerciseIndex: number) => { // ... same logic
+  const handleAiSetCompleted = (exerciseIndex: number) => { 
     setDailyLog(prevLog => {
         if (!prevLog) return null;
         const ex = prevLog.logged_exercises[exerciseIndex];
@@ -215,7 +213,7 @@ const TodaysWorkout: React.FC = () => {
                 <div className="accordion-header" onClick={() => toggleExpandExercise(index)}>
                   <h3>{item.exercise_name}</h3>
                   <span className="status-icon">
-                    {item.completed_status === 'full' ? '✅' : item.completed_status === 'partial' ? '🔶' : '◻️'}
+                    {item.completed_status === 'full' ? '☑️' : item.completed_status === 'partial' ? '🔷' : '◻️'}
                   </span>
                 </div>
                 <div className="accordion-summary" onClick={() => toggleExpandExercise(index)}>

@@ -4,23 +4,21 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { EXERCISE_TRACKER_MAP } from '../logic/exerciseTrackers';
 import './PoseDetector.css';
 
-// Define a simple interface for type safety
 interface LandmarkPoint { x: number; y: number; z: number; visibility?: number; }
 
-// Props that the parent component (TodaysWorkout) will pass to us
 interface PoseDetectorProps {
   exercise: {
     exercise_name: string;
     target_reps_or_duration: string;
   };
-  isActive: boolean; // ** NEW PROP: This will control everything **
+  isActive: boolean; 
   onRepCounted: (repCount: number) => void;
   onSetCompleted: () => void;
 }
 
 const PoseDetector: React.FC<PoseDetectorProps> = ({
   exercise,
-  isActive, // Use the new prop
+  isActive, 
   onRepCounted,
   onSetCompleted
 }) => {
@@ -32,19 +30,16 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
     const [landmarkerLoaded, setLandmarkerLoaded] = useState<boolean>(false);
     const [statusText, setStatusText] = useState("Initializing...");
 
-    // Internal logic state, managed with refs
     const stageRef = useRef<"down" | "up" | null>(null);
     const repCounterRef = useRef<number>(0);
     const targetRepsRef = useRef<number>(11);
 
-    // Parse target reps when the exercise prop changes
     useEffect(() => {
         const repsMatch = exercise.target_reps_or_duration.match(/\d+/);
         targetRepsRef.current = repsMatch && repsMatch[0] ? parseInt(repsMatch[0], 10) : 10;
         console.log(`[PoseDetector] Target reps for ${exercise.exercise_name} set to: ${targetRepsRef.current}`);
     }, [exercise.target_reps_or_duration, exercise.exercise_name]);
 
-    // One-time setup for PoseLandmarker
     useEffect(() => {
         const createPoseLandmarker = async () => {
             try {
@@ -67,7 +62,7 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
             }
         };
         createPoseLandmarker();
-        return () => { // Cleanup when component unmounts
+        return () => { 
             poseLandmarkerRef.current?.close();
         };
     }, []);
@@ -105,8 +100,8 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
                   onRepCounted(repCounterRef.current);
                   if (repCounterRef.current >= targetRepsRef.current) {
                       console.log(`[PoseDetector] Set completed for ${exercise.exercise_name}! Notifying parent.`);
-                        onSetCompleted(); // Notify parent that the set is done
-                        repCounterRef.current = 0; // Reset for next set
+                        onSetCompleted(); 
+                        repCounterRef.current = 0; 
                         stageRef.current = null;
                         onRepCounted(0);
                   }
@@ -131,7 +126,6 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
         }
     };
 
-    // Main effect to control the webcam stream based on the `isActive` prop
     useEffect(() => {
         const video = videoRef.current;
         if (!video || !landmarkerLoaded) return;
@@ -152,7 +146,6 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
                 const stream = await navigator.mediaDevices.getUserMedia({ video: true });
                 video.srcObject = stream;
                 setStatusText(" ");
-                // The onPlaying prop on the video element will start the predictWebcam loop
             } catch (error) {
                 console.error("Error accessing webcam:", error);
                 setStatusText("Camera access denied.");
@@ -165,10 +158,10 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
             stopWebcam();
         }
 
-        return () => { // Cleanup function for this effect
+        return () => { 
             stopWebcam();
         };
-    }, [isActive, landmarkerLoaded]); // Re-run when isActive or landmarkerLoaded changes
+    }, [isActive, landmarkerLoaded]);
 
     return (
         <div className="pose-container">
@@ -177,8 +170,6 @@ const PoseDetector: React.FC<PoseDetectorProps> = ({
                 <canvas ref={canvasRef} className="output_canvas"></canvas>
             </div>
             <p >{landmarkerLoaded ? statusText : "Loading AI Model..."}</p>
-            {/* <p>Reps = {repCounterRef.current} / {targetRepsRef.current}</p> */}
-            {/* The enable/disable button is now removed. Parent controls this. */}
         </div>
     );
 };

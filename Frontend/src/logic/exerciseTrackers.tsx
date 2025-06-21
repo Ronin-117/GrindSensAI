@@ -22,7 +22,6 @@ const PoseLandmarkIndices = {
 export type TrackerStage = "down" | "up" | null;
 export interface TrackerResult { newStage: TrackerStage; repCounted: boolean; }
 
-// Helper to check if landmarks are available and visible enough
 function checkLandmarks(landmarks: Landmark[], ...indices: number[]): boolean {
   return indices.every(index => landmarks[index] && (landmarks[index].visibility === undefined || landmarks[index].visibility! > 0.5));
 }
@@ -53,8 +52,8 @@ function squat(landmarks: Landmark[], stage: TrackerStage): TrackerResult {
   if (!checkLandmarks(landmarks, ...required)) return { newStage, repCounted };
 
   const kneeAngle = calculateAngle(landmarks[23], landmarks[25], landmarks[27]);
-  if (kneeAngle > 160) newStage = "up"; // Standing
-  if (kneeAngle < 100 && newStage === 'up') { // Squatted down
+  if (kneeAngle > 160) newStage = "up"; 
+  if (kneeAngle < 100 && newStage === 'up') { 
     newStage = "down";
     repCounted = true;
   }
@@ -72,8 +71,7 @@ function shoulder_press(landmarks: Landmark[], stage: TrackerStage): TrackerResu
     const left_index_y = landmarks[PoseLandmarkIndices.LEFT_INDEX].y;
     const nose_y = landmarks[PoseLandmarkIndices.NOSE].y;
 
-    // In screen coordinates, a lower Y value is higher up.
-    if (right_index_y < nose_y && left_index_y < nose_y) newStage = "up"; // Hands above nose
+    if (right_index_y < nose_y && left_index_y < nose_y) newStage = "up"; 
     if (right_index_y > nose_y && left_index_y > nose_y && newStage === 'up') {
         newStage = "down";
         repCounted = true;
@@ -81,12 +79,9 @@ function shoulder_press(landmarks: Landmark[], stage: TrackerStage): TrackerResu
     return { newStage, repCounted };
 }
 
-// Add other exercise functions here...
 
 // --- Function Mapper ---
-// Maps a standardized exercise name to the correct counting function
 export const EXERCISE_TRACKER_MAP: { [key: string]: (landmarks: Landmark[], stage: TrackerStage) => TrackerResult } = {
-  // Add keys that match your `exercise_name` from the database (in lowercase)
   "curl": bicep_curl,
   "bicep curl": bicep_curl,
   "dumbbell bicep curl": bicep_curl,
@@ -96,5 +91,4 @@ export const EXERCISE_TRACKER_MAP: { [key: string]: (landmarks: Landmark[], stag
   "shoulder press": shoulder_press,
   "dumbbell shoulder press": shoulder_press,
   "overhead press": shoulder_press,
-  // ...add all other mappings...
 };

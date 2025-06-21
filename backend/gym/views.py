@@ -25,7 +25,7 @@ from datetime import datetime,timedelta
 class UserCreateView(generics.CreateAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
-    permission_classes = [permissions.AllowAny] # Anyone can sign up
+    permission_classes = [permissions.AllowAny] 
 
 class UserProfileCreateView(generics.CreateAPIView):
     serializer_class = UserProfileSerializer
@@ -55,30 +55,26 @@ class TrainingRoutineListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        # Return presets OR routines belonging to the current user
         return TrainingRoutine.objects.filter(
             Q(is_preset=True) | Q(user=user)
-        ).distinct().order_by('-is_preset', '-created_at') # Presets first, then user's
+        ).distinct().order_by('-is_preset', '-created_at') 
 
     def get_permissions(self):
         if self.request.method == 'POST':
-            # If 'is_preset' is true in payload, perhaps use different permission
-            # This is a simplified check; real-world would be more robust
             if self.request.data.get('is_preset') and self.request.headers.get('X-Admin-Preset-Key') == 'YOUR_SECRET_KEY':
-                return [permissions.AllowAny()] # Or a custom IsAdminOrSpecialKey permission
+                return [permissions.AllowAny()] 
         return [permissions.IsAuthenticated()]
 
 
     def perform_create(self, serializer):
         is_preset_payload = self.request.data.get('is_preset', False)
-        admin_key_present = self.request.headers.get('X-Admin-Preset-Key') == 'YOUR_SECRET_KEY' # Example
+        admin_key_present = self.request.headers.get('X-Admin-Preset-Key') == 'YOUR_SECRET_KEY'
 
         if is_preset_payload and admin_key_present:
-            serializer.save(user=None, is_preset=True) # Preset creation
+            serializer.save(user=None, is_preset=True) 
         elif self.request.user.is_authenticated:
-            serializer.save(user=self.request.user, is_preset=False) # User's custom routine
+            serializer.save(user=self.request.user, is_preset=False)
         else:
-            # This case should ideally be caught by permissions earlier
             from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Authentication required or invalid preset creation attempt.")
 
@@ -94,28 +90,26 @@ class TrainingRoutineDetailView(generics.RetrieveUpdateDestroyAPIView):
 
     def perform_update(self, serializer):
         instance = serializer.instance
-        if instance.is_preset and not self.request.user.is_staff: # Only staff can edit presets
+        if instance.is_preset and not self.request.user.is_staff:
             raise PermissionDenied("You do not have permission to edit preset routines.")
-        # For user-owned routines, ensure they are the owner (already handled by get_queryset for non-staff)
-        serializer.save() # For user routines, user will be implicitly the same
+        serializer.save() 
 
     def perform_destroy(self, instance):
-        if instance.is_preset and not self.request.user.is_staff: # Only staff can delete presets
+        if instance.is_preset and not self.request.user.is_staff:
             raise PermissionDenied("You do not have permission to delete preset routines.")
         instance.delete()
 
     @action(detail=True, methods=['post'], url_path='copy', permission_classes=[permissions.IsAuthenticated])
     def copy_routine(self, request, pk=None):
-        original_routine = self.get_object() # Gets the routine by pk (could be a preset)
+        original_routine = self.get_object() 
 
-        if not original_routine: # Should be caught by get_object if not found
+        if not original_routine:
             return Response({"detail": "Routine not found."}, status=status.HTTP_404_NOT_FOUND)
 
-        # Create a new routine for the current user based on the original
         new_routine_data = {
             "user": request.user,
-            "is_preset": False, # This is now a user's custom routine
-            "routine_id": f"{original_routine.routine_id}_copy_{int(time.time())}", # Ensure unique ID
+            "is_preset": False,
+            "routine_id": f"{original_routine.routine_id}_copy_{int(time.time())}",
             "routine_name": f"{original_routine.routine_name} (Copy)",
             "goal": original_routine.goal,
             "experience_level": original_routine.experience_level,
@@ -125,10 +119,9 @@ class TrainingRoutineDetailView(generics.RetrieveUpdateDestroyAPIView):
             "cardio_guidelines": original_routine.cardio_guidelines,
             "flexibility_guidelines": original_routine.flexibility_guidelines,
             "precautions": original_routine.precautions,
-            "coach_response": "Copied from preset. Adjust as needed." # Or clear it
+            "coach_response": "Copied from preset. Adjust as needed."
         }
 
-        # Deep copy weekly schedule and exercises
         new_routine = TrainingRoutine.objects.create(**new_routine_data)
 
         for original_schedule_item in original_routine.weekly_schedule.all():
@@ -182,21 +175,19 @@ class GeminiTrainingRoutine(BaseModel):
     coach_response: str = Field(..., description="AI's response/reasoning based on the prompt.")
 
 # --- Gemini Configuration ---
-# Store your API key securely, e.g., in environment variables or Django settings
 load_dotenv()
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "YOUR_API_KEY_HERE_IF_NOT_IN_ENV")
 genai_client = None
 
 try:
     genai_client = genai.Client(api_key=GEMINI_API_KEY)
-    print("--- Gemini Client Initialized ---")
 except Exception as e:
     print(f"Error initializing Gemini Client: {e}")
     genai_client = None
 
 
 class GenerateWorkoutView(APIView):
-    permission_classes = [permissions.IsAuthenticated] # Only logged-in users can use this
+    permission_classes = [permissions.IsAuthenticated] 
 
     def post(self, request, *args, **kwargs):
         if not genai_client:
@@ -206,18 +197,14 @@ class GenerateWorkoutView(APIView):
             )
 
         user_prompt = request.data.get('prompt')
-        existing_routine_data_str = request.data.get('existing_routine_json') # For modifications
+        existing_routine_data_str = request.data.get('existing_routine_json')
 
         if not user_prompt:
             return Response({"error": "Prompt is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Construct the message for Gemini
         full_prompt_message = user_prompt
         if existing_routine_data_str:
             try:
-                # You might want to pretty-print or summarize the existing routine
-                # to keep the context for Gemini concise but informative.
-                # For now, just appending the string.
                 full_prompt_message = (
                     f"User wants to modify an existing routine. "
                     f"Their prompt for modification is: '{user_prompt}'.\n\n"
@@ -226,11 +213,7 @@ class GenerateWorkoutView(APIView):
                     f"Please provide the modified routine based on the prompt, "
                     f"maintaining the same overall JSON structure as defined in the schema."
                 )
-                # print("--- Sending to Gemini (Modification) ---")
-                # print(f"Prompt context: {full_prompt_message[:500]}...") # Log a snippet
             except Exception as e:
-                # print(f"Error processing existing_routine_json: {e}")
-                # Proceed with just the user prompt if parsing existing data fails
                 pass
 
 
@@ -244,24 +227,15 @@ class GenerateWorkoutView(APIView):
                             },
             )
             gemini_response_obj = chat_session.send_message(full_prompt_message)
-            # print("--- Gemini Response Object ---")
-            # print(gemini_response_obj)
             raw_json_response = gemini_response_obj.text
-            # print("--- Raw Gemini JSON Response ---")
-            # print(raw_json_response)
 
 
-            # Validate the JSON response against your Pydantic model
             try:
-                # Attempt to parse the raw JSON string first
                 parsed_json_data = json.loads(raw_json_response)
-                # Then validate with Pydantic
                 validated_routine = GeminiTrainingRoutine(**parsed_json_data)
-                # Pydantic model automatically converts to dict with .model_dump() (v2) or .dict() (v1)
                 return Response(validated_routine.model_dump(), status=status.HTTP_200_OK)
             except json.JSONDecodeError as json_err:
                 print(f"Gemini response was not valid JSON: {json_err}")
-                # print(f"Faulty JSON string: {raw_json_response}")
                 return Response(
                     {"error": "AI response was not valid JSON.", "details": str(json_err), "raw_response": raw_json_response},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -274,15 +248,12 @@ class GenerateWorkoutView(APIView):
                 )
 
         except Exception as e:
-            # Catching broad exceptions from Gemini API call
             print(f"Error calling Gemini API: {e}")
-            # Check for specific Gemini error types if available in the SDK
             if hasattr(e, 'message'):
                 error_detail = e.message
             else:
                 error_detail = str(e)
 
-            # Handle specific blocked prompt error (example)
             if "blocked" in error_detail.lower() and "prompt" in error_detail.lower():
                  return Response(
                     {"error": "Your prompt was blocked by the AI's safety filters. Please rephrase your request."},
@@ -303,8 +274,6 @@ class UserWorkoutPlanView(generics.RetrieveUpdateAPIView):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_object(self):
-        # Get or create a WorkoutPlan for the current user
-        # This ensures every authenticated user has a plan object we can update
         plan, created = WorkoutPlan.objects.get_or_create(user=self.request.user)
         if created:
             print(f"WorkoutPlan created for user: {self.request.user.username}")
@@ -340,53 +309,38 @@ class DailyLogGetOrCreateView(APIView):
                 'routine_used': workout_plan.current_routine,
                 'routine_log_name': workout_plan.current_routine.routine_name,
                 'logged_exercises': self.get_exercises_for_day(workout_plan.current_routine, log_date),
-                'completion_percentage': 0 # Initial
+                'completion_percentage': 0 
             }
         )
 
         if created:
             print(f"Created new DailyWorkoutLog for {user.username} on {log_date}")
         else:
-            # Optional: If log exists, verify/update logged_exercises if routine changed or day's exercises differ
-            # For simplicity now, we assume if it exists, it's mostly correct.
-            # A more robust system might check if routine_used matches workout_plan.current_routine
-            # and re-populate logged_exercises if they differ, preserving completed data.
             pass
 
 
-        serializer = DailyWorkoutLogSerializer(daily_log) # You'll need this serializer
+        serializer = DailyWorkoutLogSerializer(daily_log) 
         return Response(serializer.data, status=status.HTTP_200_OK if not created else status.HTTP_201_CREATED)
 
     def get_exercises_for_day(self, routine: TrainingRoutine, log_date: datetime.date):
-        # Determine which WeeklyScheduleItem corresponds to log_date
-        # This logic depends heavily on how 'day_of_week_or_number' is stored in WeeklyScheduleItem
-        # Example: if 'day_of_week_or_number' is 'Day 1', 'Day 2', ...
-        # And your routine is a N-day cycle.
-        # Or if it's 'Monday', 'Tuesday', etc.
-        
-        # Simplified: assumes "Day 1" maps to Monday, "Day 2" to Tuesday etc. for a 7-day cycle.
-        # OR if your 'day_of_week_or_number' is literally the day name.
         day_names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-        day_of_week_str_long = day_names[log_date.weekday()] # Monday is 0, Sunday is 6
-        day_of_week_str_short = day_of_week_str_long[:3] # "Mon", "Tue"
-        numeric_day_str = f"Day {log_date.weekday() + 1}" # "Day 1" for Monday
+        day_of_week_str_long = day_names[log_date.weekday()] 
+        day_of_week_str_short = day_of_week_str_long[:3]
+        numeric_day_str = f"Day {log_date.weekday() + 1}" 
 
-        # Try to find the schedule item for today
-        # This query needs to be robust based on your 'day_of_week_or_number' format
         schedule_item_for_today = routine.weekly_schedule.filter(
             Q(day_of_week_or_number__iexact=day_of_week_str_long) |
             Q(day_of_week_or_number__iexact=day_of_week_str_short) |
             Q(day_of_week_or_number__iexact=numeric_day_str) 
-            # Add more Q objects if you have other formats like "Workout A"
         ).first()
 
         logged_exercises_list = []
         if schedule_item_for_today:
-            for exercise in schedule_item_for_today.exercises.all().order_by('id'): # Order matters
+            for exercise in schedule_item_for_today.exercises.all().order_by('id'):
                 logged_exercises_list.append({
                     "original_exercise_id": exercise.pk,
                     "exercise_name": exercise.exercise_name,
-                    "target_muscles": exercise.target_muscles, # Assuming this is a list
+                    "target_muscles": exercise.target_muscles, 
                     "target_sets": exercise.sets,
                     "target_reps_or_duration": exercise.reps_or_duration,
                     "notes_from_routine": exercise.notes,
@@ -405,39 +359,23 @@ class DailyLogDetailView(generics.RetrieveUpdateAPIView):
     queryset = DailyWorkoutLog.objects.all() # Standard queryset
     
     def get_queryset(self):
-        # Ensure user can only access/update their own logs
         return DailyWorkoutLog.objects.filter(workout_plan__user=self.request.user)
 
     def perform_update(self, serializer):
-        # You could add logic here to recalculate completion_percentage on the backend
-        # based on the updated logged_exercises for security/consistency,
-        # or trust the frontend's calculation sent in the PATCH payload.
-        # For now, we'll trust the frontend's calculation.
         instance = serializer.save()
         print(f"DailyWorkoutLog {instance.id} updated. Completion: {instance.completion_percentage}%")
-        # If using signals for heat_level, it will be triggered automatically.
 
 class WorkoutContributionView(APIView):
-    """
-    Provides data for the GitHub-style contribution chart.
-    Returns a list of objects, each containing a date and a completion status.
-    """
     permission_classes = [permissions.IsAuthenticated]
 
     def get(self, request, *args, **kwargs):
         user = request.user
         
-        # Define the time range (e.g., the last year)
         one_year_ago = timezone.now().date() - timedelta(days=365)
         
-        # Get all relevant daily logs for the user in the time range
-        # We only need the date and completion_percentage fields
         logs = DailyWorkoutLog.objects.filter(
             workout_plan__user=user,
             date__gte=one_year_ago
         ).values('date', 'completion_percentage')
-        
-        # The data is already in a good format: [{'date': date_obj, 'completion_percentage': int}, ...]
-        # DRF's Response will handle serializing the date objects to strings.
         
         return Response(list(logs))

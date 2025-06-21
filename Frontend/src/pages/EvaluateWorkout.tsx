@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getTrainingRoutinesApi, getUserWorkoutPlanApi, updateUserWorkoutPlanApi } from './api';
-import './EvaluateWorkout.css'; // Import the new stylesheet
+import { deleteTrainingRoutineApi, getTrainingRoutinesApi, getUserWorkoutPlanApi, updateUserWorkoutPlanApi } from './api';
+import './EvaluateWorkout.css';
 
 interface TrainingRoutineData {
   id: number;
@@ -24,6 +24,7 @@ const EvaluateWorkout: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
   const [selectingRoutineId, setSelectingRoutineId] = useState<number | null>(null);
+  const [deletingRoutineId, setDeletingRoutineId] = useState<number | null>(null);
   const [successMessage, setSuccessMessage] = useState<string>('');
   const navigate = useNavigate();
 
@@ -61,6 +62,35 @@ const EvaluateWorkout: React.FC = () => {
     navigate(`/workout-mod`, { state: { mode: 'edit', routineId, isPreset } });
   };
 
+  const handleDeleteRoutine = async (routineId: number, routineName: string) => {
+    if (!window.confirm(`Are you sure you want to delete the routine "${routineName}"? This action cannot be undone.`)) {
+      return; 
+    }
+
+    setDeletingRoutineId(routineId); 
+    setError('');
+    setSuccessMessage('');
+
+    try {
+      await deleteTrainingRoutineApi(routineId);
+
+      setRoutines(prevRoutines => prevRoutines.filter(r => r.id !== routineId));
+
+      if (currentSelectedRoutineId === routineId) {
+        setCurrentSelectedRoutineId(null);
+      }
+
+      setSuccessMessage(`Routine "${routineName}" was successfully deleted.`);
+      setTimeout(() => setSuccessMessage(''), 3000);
+
+    } catch (err: any) {
+      console.error('Failed to delete routine:', err);
+      setError(err.response?.data?.detail || err.message || 'Could not delete this routine.');
+    } finally {
+      setDeletingRoutineId(null); 
+    }
+  };
+
   const handleRoutineNameClick = (routineId: number) => {
     navigate(`/workout-display`, { state: { routineId } });
   };
@@ -82,7 +112,6 @@ const EvaluateWorkout: React.FC = () => {
     }
   };
   
-  // Loading and Error states are handled outside the main return for clarity
   if (loading && routines.length === 0) {
     return <div className="status-container"><p>Loading routines...</p></div>;
   }
@@ -121,6 +150,22 @@ const EvaluateWorkout: React.FC = () => {
                       <i className="fas fa-pencil-alt"></i>
                       {routine.is_preset ? 'Use & Edit' : 'Edit'}
                     </button>
+
+                    {!routine.is_preset && ( 
+                      <button 
+                        className="action-btn btn-delete" 
+                        onClick={() => handleDeleteRoutine(routine.id, routine.routine_name)}
+                        disabled={deletingRoutineId === routine.id}
+                      >
+                        {deletingRoutineId === routine.id ? (
+                          <i className="fas fa-spinner fa-spin"></i>
+                        ) : (
+                          <i className="fas fa-trash-alt"></i>
+                        )}
+                        Delete
+                      </button>
+                    )}
+
                     {isSelected ? (
                       <span className="selected-indicator"><i className="fas fa-check"></i>Selected</span>
                     ) : (

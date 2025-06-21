@@ -35,19 +35,16 @@ class ExerciseSerializer(serializers.ModelSerializer):
     class Meta:
         model = Exercise
         fields = ['id', 'exercise_name', 'target_muscles', 'sets', 'reps_or_duration', 'rest_period', 'notes']
-        # `schedule_item` will be handled by the parent
 
 class WeeklyScheduleItemSerializer(serializers.ModelSerializer):
-    exercises = ExerciseSerializer(many=True) # Nested exercises
+    exercises = ExerciseSerializer(many=True) 
 
     class Meta:
         model = WeeklyScheduleItem
         fields = ['id', 'day_of_week_or_number', 'session_focus', 'exercises']
-        # `routine` will be handled by the parent
 
 class TrainingRoutineSerializer(serializers.ModelSerializer):
     weekly_schedule = WeeklyScheduleItemSerializer(many=True)
-    # To show username in the response (read-only)
     username = serializers.CharField(source='user.username', read_only=True)
 
     class Meta:
@@ -72,18 +69,15 @@ class TrainingRoutineSerializer(serializers.ModelSerializer):
         return routine
 
     def update(self, instance, validated_data):
-        # Basic update for TrainingRoutine fields
         instance.routine_id = validated_data.get('routine_id', instance.routine_id)
         instance.routine_name = validated_data.get('routine_name', instance.routine_name)
         instance.goal = validated_data.get('goal', instance.goal)
-        # ... update other TrainingRoutine fields ...
         instance.coach_response = validated_data.get('coach_response', instance.coach_response)
         instance.save()
 
         weekly_schedule_data = validated_data.pop('weekly_schedule', None)
-        if weekly_schedule_data is not None: # Only update if 'weekly_schedule' is in payload
-            # Clear existing schedule items and their exercises
-            instance.weekly_schedule.all().delete() # This cascades to exercises
+        if weekly_schedule_data is not None:
+            instance.weekly_schedule.all().delete() 
 
             for schedule_item_data in weekly_schedule_data:
                 exercises_data = schedule_item_data.pop('exercises', [])
@@ -95,18 +89,15 @@ class TrainingRoutineSerializer(serializers.ModelSerializer):
 ##############################
 
 class WorkoutPlanSerializer(serializers.ModelSerializer):
-    heat_level = serializers.IntegerField(read_only=True) # From @property
+    heat_level = serializers.IntegerField(read_only=True) 
     username = serializers.CharField(source='user.username', read_only=True)
 
-    # To show details of the current routine when GETTING the plan
     current_routine_details = TrainingRoutineSerializer(source='current_routine', read_only=True, allow_null=True)
 
-    # To ACCEPT a routine ID when UPDATING the plan
-    # We use PrimaryKeyRelatedField to accept the ID of the TrainingRoutine
     current_routine = serializers.PrimaryKeyRelatedField(
-        queryset=TrainingRoutine.objects.all(), # Or a more filtered queryset if needed
-        allow_null=True, # Allow setting it to null (deselect routine)
-        required=False # Not required for every update to WorkoutPlan
+        queryset=TrainingRoutine.objects.all(), 
+        allow_null=True,
+        required=False 
     )
 
     class Meta:
@@ -115,32 +106,29 @@ class WorkoutPlanSerializer(serializers.ModelSerializer):
             'id',
             'user',
             'username',
-            'current_routine',          # This field will be used for PATCH/PUT (expects routine ID)
-            'current_routine_details',  # This field will be used for GET (shows serialized routine)
+            'current_routine',          
+            'current_routine_details', 
             'heat_level',
             'created_at',
             'updated_at'
         ]
         read_only_fields = ['user', 'username', 'heat_level', 'created_at', 'updated_at', 'current_routine_details']
 
-class MinimalExerciseSerializer(serializers.ModelSerializer): # For nesting inside schedule
+class MinimalExerciseSerializer(serializers.ModelSerializer): 
     class Meta:
         model = Exercise
         fields = ['id', 'exercise_name', 'target_muscles', 'sets', 'reps_or_duration', 'notes']
 
-class MinimalWeeklyScheduleItemSerializer(serializers.ModelSerializer): # For nesting
+class MinimalWeeklyScheduleItemSerializer(serializers.ModelSerializer): 
     exercises = MinimalExerciseSerializer(many=True, read_only=True)
     class Meta:
         model = WeeklyScheduleItem
         fields = ['id', 'day_of_week_or_number', 'session_focus', 'exercises']
 
 class DailyWorkoutLogSerializer(serializers.ModelSerializer):
-    # This field is intended for writing the WorkoutPlan ID
-    workout_plan = serializers.PrimaryKeyRelatedField( # Renamed from workout_plan_id to match model field
+    workout_plan = serializers.PrimaryKeyRelatedField( 
         queryset=WorkoutPlan.objects.all(),
-        # No 'source' needed if the serializer field name matches the model field name
     )
-    # To show user for context (optional, as it's via workout_plan)
     username = serializers.CharField(source='workout_plan.user.username', read_only=True, allow_null=True)
     routine_name_from_plan = serializers.CharField(source='workout_plan.current_routine.routine_name', read_only=True, allow_null=True)
 
@@ -149,13 +137,12 @@ class DailyWorkoutLogSerializer(serializers.ModelSerializer):
         model = DailyWorkoutLog
         fields = [
             'id',
-            'workout_plan',         # Now this refers to the PrimaryKeyRelatedField above.
-                                    # It will accept an ID on write and return an ID on read.
-            'username',             # For context
-            'routine_name_from_plan',# For context
+            'workout_plan',         
+            'username',             
+            'routine_name_from_plan',
             'date',
             'routine_log_name',
-            'routine_used',         # This is the ID of the TrainingRoutine model
+            'routine_used',         
             'logged_exercises',
             'completion_percentage',
             'session_notes'
@@ -163,13 +150,11 @@ class DailyWorkoutLogSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'username', 'routine_name_from_plan']
 
     def validate_logged_exercises(self, value):
-        # Optional: Add custom validation for the structure of logged_exercises
         if not isinstance(value, list):
             raise serializers.ValidationError("logged_exercises must be a list.")
         for item in value:
             if not isinstance(item, dict):
                 raise serializers.ValidationError("Each item in logged_exercises must be a dictionary.")
-            # Add more checks for required keys like 'original_exercise_id', 'exercise_name', etc.
             if 'exercise_name' not in item or 'target_sets' not in item:
                  raise serializers.ValidationError("Exercise item missing required fields (e.g., exercise_name, target_sets).")
         return value

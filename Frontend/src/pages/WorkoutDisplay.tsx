@@ -42,7 +42,7 @@ const WorkoutDisplay: React.FC = () => {
   const [routine, setRoutine] = useState<FullTrainingRoutineData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>('');
-  const [openDayId, setOpenDayId] = useState<number | null>(null); // State for accordion
+  const [openDayId, setOpenDayId] = useState<number | null>(null); 
   const location = useLocation();
   const navigate = useNavigate();
   const routineIdFromState = location.state?.routineId as number | undefined;
@@ -59,7 +59,6 @@ const WorkoutDisplay: React.FC = () => {
         const response = await getSpecificRoutineApi(routineIdFromState);
         setRoutine(response.data);
         setError('');
-        // Automatically open the first day of the schedule
         if (response.data.weekly_schedule && response.data.weekly_schedule.length > 0) {
           setOpenDayId(response.data.weekly_schedule[0].id);
         }
@@ -74,7 +73,7 @@ const WorkoutDisplay: React.FC = () => {
   }, [routineIdFromState, navigate]);
 
   const handleToggleDay = (dayId: number) => {
-    setOpenDayId(openDayId === dayId ? null : dayId); // Toggle open/close
+    setOpenDayId(openDayId === dayId ? null : dayId);
   };
 
   if (loading) return <div className="status-container"><p>Loading routine...</p></div>;

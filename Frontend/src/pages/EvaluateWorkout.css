@@ -156,6 +156,17 @@
   cursor: not-allowed;
 }
 
+.action-btn.btn-delete {
+  color: #dc3545; /* A common red color for delete actions */
+  border-color: #dc3545;
+}
+
+.action-btn.btn-delete:hover {
+  background-color: var(--color-error-bg);
+  fill-opacity: 0.5;
+  color: white;
+}
+
 .selected-indicator {
   display: flex;
   align-items: center;
