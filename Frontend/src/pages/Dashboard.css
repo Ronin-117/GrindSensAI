@@ -39,13 +39,13 @@
 /* --- MODIFIED: The Corkboard Styling --- */
 .contribution-board {
   /* A dark, wood-like border */
-  border: 12px solid #5a3d24;
+  border: 12px solid #452c16;
   border-radius: var(--border-radius-medium);
   padding: var(--spacing-xl);
   box-shadow: inset 0 0 15px rgba(0,0,0,0.5), 0 10px 30px rgba(0, 0, 0, 0.4);
 
   /* This simulates a dark cork texture with CSS gradients */
-  background-color: #63452c;
+  background-color: #462d1a;
   background-image: url('/board.jpg');
   background-size: 100px 50px;
 }
